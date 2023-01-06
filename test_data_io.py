@@ -1,6 +1,6 @@
 import pandas as pd
 from io import StringIO
-from data_io import read_data
+from data_io import read_data, write_data
 
 
 def test_read_data():
@@ -27,4 +27,34 @@ def test_read_data_errors():
     assert read_data('./datasets/') is None
     assert read_data('./datasets/non_existing_file.txt') is None
     assert read_data('./datasets/file_without_extension') is None
+    assert read_data('./datasets/nonexisting directory/file.csv') is None
+    # Cannot test PermissionError
+
+
+def test_write_data():
+    expected_data = {
+        'Outlook': ['Sunny', 'Overcast', 'Rainy'],
+        'Temperature': ['Hot', 'Hot', 'Cool'],
+        'Humidity': ['High', 'High', 'Normal'],
+        'Wind': ['Weak', 'Weak', 'Weak'],
+        'PlayGolf': ['No', 'Yes', 'Yes']
+    }
+    expected_function_result = pd.DataFrame(expected_data)
+    path_to_test_file = './datasets/test_write.csv'
+    assert write_data(expected_function_result, path_to_test_file) is True
+    written_data = read_data(path_to_test_file)
+    assert all(expected_function_result == written_data) is True
+
+
+def test_write_data_error():
+    expected_data = {
+        'Outlook': ['Sunny', 'Overcast', 'Rainy'],
+        'Temperature': ['Hot', 'Hot', 'Cool'],
+        'Humidity': ['High', 'High', 'Normal'],
+        'Wind': ['Weak', 'Weak', 'Weak'],
+        'PlayGolf': ['No', 'Yes', 'Yes']
+    }
+    data = pd.DataFrame(expected_data)
+    assert write_data(data, './datasets/') is False
+    assert write_data(data, './datasets/nonexisting directory/file.csv') is False
     # Cannot test PermissionError
