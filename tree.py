@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+from data_io import read_data
 
 
 class Node:
@@ -7,7 +7,7 @@ class Node:
     An object that holds information about data split to smaller datasets,
     or a value if it's a leaf node (no data can be split anymore)
 
-    :param feature: str; name of the attribute by which data is split
+    :param feature: str; name of the feature by which data is split
 
     :param subnodes: dict; keys are possible answers to feature
     (or 'Less' and 'More' if the feature values are numerical (threshold exists))
@@ -20,7 +20,7 @@ class Node:
     which are used to make Nodes with further splits (or values)
 
     :param value: type depending on the problem; only used when dataset given
-    to make the node cannot be split further or all target attribute values of
+    to make the node cannot be split further or all target feature values of
     the dataset are equal. Then a created node only holds the value
     """
     def __init__(self, feature=None, subnodes=None, threshold=None, value=None):
@@ -35,7 +35,7 @@ class DecisionTree:
     """
     An object that creates a network of Nodes that form a decision tree
 
-    :param root: Node object, defaults to None, Node is assigned by self.fit() function;
+    :param root: Node object, defaults to None, Node is assigned by self.fit() method;
     It holds the first dataset splitting Node
 
     :param max_tree_depth: int; determines how many split nodes can a tree branch have
@@ -46,7 +46,7 @@ class DecisionTree:
 
     def gini_index_calculator(self, target_data):
         """
-        A function that calculates the Gini index of a dataset
+        A method that calculates the Gini index of a dataset
         which is a probability of a specific feature being classified incorrectly
         when picked randomly.
         The mathematic formula is: 1 - sum of squared probabilities of values being picked
@@ -61,7 +61,7 @@ class DecisionTree:
 
     def information_gain(self, parent_data, split_data_list):
         """
-        A function that calculates the improvment in data purity
+        A method that calculates the improvment in data purity
         of a given split of given dataset
         Returns a float number, where higher value is better
         """
@@ -71,25 +71,25 @@ class DecisionTree:
             new_gini += self.gini_index_calculator(child_data) * len(child_data) / len(parent_data)
         return old_gini - new_gini
 
-    def numerical_split(self, dataset, attribute, current_best_split, max_gain):
+    def numerical_split(self, dataset, feature, previous_best_split):
         """
-        A function that searches for the best numerical value to be the threshold
-        of the data split.
-        Returns:
-        a dictionary that consists of:
+        A method that searches for the best numerical value to be the threshold
+        of the data split and check if it's better
+        than the one passed as a method argument.
+        Returns a dictionary that consists of:
         -the feature that the data is sorted by,
         -a dictionary that consists of keys stating the relation
         of feature values in arrays of split data to the threshold and the values
         -threshold value
         -the information gain of the split
-        and the
+        It will return the passed split if all the checked splits are worse than it
         """
-        new_gain = max_gain
-        best_split_num = {}
-        potential_thresholds = np.unique(dataset[:, attribute])
+        new_gain = previous_best_split['info_gain']
+        best_split = {}
+        potential_thresholds = np.unique(dataset[:, feature])
         for threshold in potential_thresholds:
-            less_or_equal_data = np.array([row for row in dataset if row[attribute] <= threshold])
-            higher_data = np.array([row for row in dataset if row[attribute] > threshold])
+            less_or_equal_data = np.array([row for row in dataset if row[feature] <= threshold])
+            higher_data = np.array([row for row in dataset if row[feature] > threshold])
             if len(less_or_equal_data) > 0 and len(higher_data) > 0:
                 targets = dataset[:, -1]
                 smaller_targets = less_or_equal_data[:, -1]
@@ -100,109 +100,151 @@ class DecisionTree:
                         '<=': less_or_equal_data,
                         '>': higher_data
                     }
-                    best_split_num = self.build_split(attribute, data_subsets, threshold, current_info_gain)
+                    best_split = self.build_split(feature, data_subsets, threshold, current_info_gain)
                     new_gain = current_info_gain
-        if not best_split_num:
-            return current_best_split, new_gain
-        return best_split_num, new_gain
+        if not best_split:
+            return previous_best_split
+        return best_split
 
-    def attribute_split(self, dataset, attribute, target, current_best_split, max_gain):
-        new_gain = max_gain
+    def feature_split(self, dataset, feature, previous_best_split):
+        """
+        A method that splits data by a feature with non-numerical values
+        and checks if the information gain of this split
+        is better than the one passed as the method argument.
+        Returns a dictionary that consists of:
+        -the feature that the data is sorted by,
+        -a dictionary that consists of keys stating the relation
+        of feature values in arrays of split data to the threshold and the values
+        -the information gain of the split
+        It will return the passed split if all the checked splits are worse than it
+        """
+        new_gain = previous_best_split['info_gain']
         best_split = {}
-        attribute_values = np.unique(dataset[:, attribute])
+        feature_values = np.unique(dataset[:, feature])
         sliced_data_list = []
         sliced_target_list = []
         targets = dataset[:, -1]
-        for value in attribute_values:
-            slice = np.array([row for row in dataset if row[attribute] == value])
+        for value in feature_values:
+            slice = np.array([row for row in dataset if row[feature] == value])
             sliced_data_list.append(slice)
             sliced_target_list.append(slice[:, -1])
         current_info_gain = self.information_gain(targets, sliced_target_list)
         if current_info_gain > new_gain:
             data_subsets = {}
-            for index, value in enumerate(attribute_values):
+            for index, value in enumerate(feature_values):
                 data_subsets[value] = sliced_data_list[index]
-            best_split = self.build_split(attribute, data_subsets, None, current_info_gain)
-            new_gain = current_info_gain
+            best_split = self.build_split(feature, data_subsets, None, current_info_gain)
         if not best_split:
-            return current_best_split, new_gain
-        return best_split, new_gain
+            return previous_best_split
+        return best_split
 
-    def build_split(self, attribute, data_subsets, threshold, gain):
+    def build_split(self, feature, data_subsets, threshold, gain):
+        """
+        A method that builds and returns a dictionary
+        containing information about the data split
+        """
         split = {
-            'feature': attribute,
+            'feature': feature,
             'data_subsets': data_subsets,
             'threshold': threshold,
             'info_gain': gain
         }
         return split
 
-    def get_best_split(self, dataset, target, num_features):
+    def get_best_split(self, dataset, num_features):
+        """
+        A method that checks every feature in given dataset and finds the best split
+        (calculated by calling numerical_split and feature_split functions)
+        for it, then returns it
+        """
         best_split = {'info_gain': -float('inf')}
-        max_gain = -float('inf')
-        attributes, _ = self.split_data(dataset, target)
-        for attribute in range(num_features):
-            attribute_values = np.unique(attributes[:, attribute])
-            # if len(attribute_values) == 1:
-            #     continue
-            if all(type(attr_value) in (int, float, np.float64) for attr_value in attribute_values) and len(attribute_values) > 2:
-                best_split, max_gain = self.numerical_split(dataset, attribute, best_split, max_gain)
+        features, _ = self.split_data(dataset)
+        for feature in range(num_features):
+            feature_values = np.unique(features[:, feature])
+            if all(type(feat_val) in (int, float, np.float64) for feat_val in feature_values):
+                best_split = self.numerical_split(dataset, feature, best_split)
             else:
-                best_split, max_gain = self.attribute_split(dataset, attribute, target, best_split, max_gain)
+                best_split = self.feature_split(dataset, feature, best_split)
                 pass
         return best_split
 
-    def split_data(self, dataset, target):
-        # attributes = dataset.drop(columns=target)
-        # targets = dataset[[target]]
-        attributes = dataset[:, :-1]
+    def split_data(self, dataset):
+        """
+        A method that separates feature values and target feature values
+        in dataset and returns them
+        """
+        features = dataset[:, :-1]
         targets = dataset[:, -1]
-        return attributes, targets
+        return features, targets
 
     def calculate_leaf_value(self, values):
+        """
+        A method that returns the most repeated value in given array of values
+        """
         values = list(values)
         return max(values, key=values.count)
 
-    def build_the_tree(self, dataset, target_label, attributes, current_depth=1):
+    def build_the_tree(self, dataset, features, current_depth=1):
+        """
+        A funcion that creates the network of Nodes that form a decision tree
+        by splitting the data recursively until the max depth has been reached
+        or smaller dataset cannot be split further, then creates proper Nodes
+        and connects them into the network
+        """
         if current_depth <= self.max_tree_depth:
-        # if num_samples >= self.min_samples_split and current_depth <= self.max_tree_depth:
             num_features = np.shape(dataset)[1] - 1
-            best_possible_split = self.get_best_split(dataset, target_label, num_features)
+            best_possible_split = self.get_best_split(dataset, num_features)
             if best_possible_split['info_gain'] > 0:
                 subnodes = {}
-                for attribute_value, sliced_data in best_possible_split['data_subsets'].items():
-                    subnodes[attribute_value] = self.build_the_tree(sliced_data, target_label, attributes, current_depth + 1)
-                attr_index = best_possible_split['feature']
-                attr = attributes[attr_index]
-                return Node(attr, subnodes, best_possible_split['threshold'])
+                for feature_value, sliced_data in best_possible_split['data_subsets'].items():
+                    subnodes[feature_value] = self.build_the_tree(sliced_data, features, current_depth + 1)
+                feat_index = best_possible_split['feature']
+                feat = features[feat_index]
+                return Node(feat, subnodes, best_possible_split['threshold'])
         leaf_value = self.calculate_leaf_value(dataset[:, -1])
         return Node(value=leaf_value)
 
-    def fit(self, X, Y, target, attributes):
+    def fit(self, X, Y, features):
+        """
+        A method that puts the target feature values collumn on the end of dataset
+        and then sets the tree root to the Node network by calling build_the_tree method
+        """
         data = np.concatenate((X, Y), axis=1)
-        self.root = self.build_the_tree(data, target, attributes)
+        self.root = self.build_the_tree(data, features)
 
-    def predictions(self, X, attributes):
-        predicitons = [self.make_prediction(x, self.root, attributes) for x in X]
-        return predicitons
+    def coverage(self, X, features):
+        """
+        A method that returns a list of results of matching
+        the target feature value to value arrays of a given dataset
+        """
+        coverage = [self.make_prediction(x, self.root, features) for x in X]
+        return coverage
 
-    def make_prediction(self, x, node, attributes):
+    def make_prediction(self, x, node, features):
+        """
+        A method that return the target feature value matched for the given
+        array of feature values
+        """
         if node.value is not None:
             return node.value
-        feature_value = x[attributes.index(node.feature)]
+        feature_value = x[features.index(node.feature)]
         if node.threshold is not None:
             if feature_value <= node.threshold:
-                return self.make_prediction(x, node.subnodes['<='], attributes)
+                return self.make_prediction(x, node.subnodes['<='], features)
             else:
-                return self.make_prediction(x, node.subnodes['>'], attributes)
+                return self.make_prediction(x, node.subnodes['>'], features)
         else:
-            return self.make_prediction(x, node.subnodes[feature_value], attributes)
+            return self.make_prediction(x, node.subnodes[feature_value], features)
 
     def printer(self, node=None, indent='  ', answer=''):
+        """
+        A method that prints the decision tree.
+        Used only for checking purposes, not shown in the actual program
+        """
         if not node:
             node = self.root
         if node.value is not None:
-            msg = indent + str(answer) + '-' + str(node.value)
+            msg = indent + str(answer) + ' - ' + str(node.value)
             print(msg)
         else:
             message = indent
@@ -210,39 +252,52 @@ class DecisionTree:
                 message += answer + ': '
             message += str(node.feature) + ': '
             if node.threshold:
-                message += f'<={node.threshold}'
+                message += f'<= {node.threshold}'
             message += '?'
             print(message)
             for answer, subnode in node.subnodes.items():
                 self.printer(subnode, indent + '  ', str(answer))
 
 
-def coverage_test(X, Y, tree, attributes):
-    predictions = tree.predictions(X, attributes)
+def coverage_test(X, Y, tree, features):
+    """
+    A function that returns the float value of the ratio of correct
+    predictions to the correct ones i. e. Checks the coverage
+    of the tree for data in the source file
+    and returns the information about it
+    """
+    predictions = tree.coverage(X, features)
     correct_predictions = 0
     for index, y in enumerate(predictions):
         if y == Y[index]:
             correct_predictions += 1
-    return correct_predictions / len(predictions)
+    coverage_percentage = round(correct_predictions / len(predictions) * 100, 2)
+    correct_guesses = f'{correct_predictions} / {len(Y)}'
+    return f'The data coverage is {coverage_percentage}% ({correct_guesses})'
+
+
+def separate_data(data, target_feature):
+    """
+    A function that separates target feature values from other values
+    and returns them along with the list of other features' names
+    """
+    features = list(data.columns)
+    features.remove(target_feature)
+    X = data.drop(columns=target_feature).values
+    Y = data[[target_feature]].values.reshape(-1, 1)
+    return X, Y, features
 
 
 def main():
-    data = pd.read_csv('./drzewo decyzyjne/datasets/iris.csv')
-    attributes = list(data.columns)
-    target_label = 'Type'
-    attributes.remove(target_label)
-    X = data.drop(columns=target_label).values
-    Y = data[[target_label]].values.reshape(-1, 1)
-    # depth = len(np.unique(data[[target_label]]))
-    # tree = DecisionTree(depth)
-    tree = DecisionTree(len(attributes))
-    # X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2, random_state=41)
-    # tree.fit(X_train, Y_train, target_label, attributes)
-    tree.fit(X, Y, target_label, attributes)
+    """
+    Used for ongoing testing
+    """
+    data = read_data('./drzewo decyzyjne/datasets/iris.csv')
+    X, Y, features = separate_data(data, 'Type')
+    tree = DecisionTree(len(features))
+    tree.fit(X, Y, features)
     tree.printer()
-    # Y_pred = tree.predictions(X_test, attributes)
-    # print(accuracy_score(Y_test, Y_pred))
-    print(coverage_test(X, Y, tree, attributes))
+    print(coverage_test(X, Y, tree, features))
     pass
 
 
