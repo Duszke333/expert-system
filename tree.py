@@ -30,6 +30,29 @@ class Node:
         # for leaves only
         self.value = value
 
+    def guess(self):
+        """
+        An interactive method that asks the user questions, finds the searched
+        target feature value recursively based on his answers and returns it.
+        """
+        if self.value is not None:
+            return self.value
+        if self.threshold:
+            print(f'Does the "{self.feature}" feature value satisfy ', end='')
+            print(f'the inequality: <={self.threshold} [Yes/No]?')
+            choice = validate_yes_no(input('>>').strip())
+            if choice is True:
+                return self.subnodes['<='].guess()
+            else:
+                return self.subnodes['>'].guess()
+        else:
+            possible_answers = list(self.subnodes.keys())
+            print('Please choose the value that matches the ', end='')
+            print(f'"{self.feature}" feature of your data object from the list below:')
+            print(possible_answers)
+            choice = validate_choice(input('>>').strip(), self.subnodes)
+            return self.subnodes[choice].guess()
+
 
 class DecisionTree:
     """
@@ -71,7 +94,7 @@ class DecisionTree:
             new_gini += self.gini_index_calculator(child_data) * len(child_data) / len(parent_data)
         return old_gini - new_gini
 
-    def numerical_split(self, dataset, feature, previous_best_split):
+    def numerical_split(self, dataset, feature_index, previous_best_split):
         """
         A method that searches for the best numerical value to be the threshold
         of the data split and check if it's better
@@ -86,10 +109,10 @@ class DecisionTree:
         """
         new_gain = previous_best_split['info_gain']
         best_split = {}
-        potential_thresholds = np.unique(dataset[:, feature])
+        potential_thresholds = np.unique(dataset[:, feature_index])
         for threshold in potential_thresholds:
-            less_or_equal_data = np.array([row for row in dataset if row[feature] <= threshold])
-            higher_data = np.array([row for row in dataset if row[feature] > threshold])
+            less_or_equal_data = np.array([row for row in dataset if row[feature_index] <= threshold])
+            higher_data = np.array([row for row in dataset if row[feature_index] > threshold])
             if len(less_or_equal_data) > 0 and len(higher_data) > 0:
                 targets = dataset[:, -1]
                 smaller_targets = less_or_equal_data[:, -1]
@@ -100,13 +123,13 @@ class DecisionTree:
                         '<=': less_or_equal_data,
                         '>': higher_data
                     }
-                    best_split = self.build_split(feature, data_subsets, threshold, current_info_gain)
+                    best_split = self.build_split(feature_index, data_subsets, threshold, current_info_gain)
                     new_gain = current_info_gain
         if not best_split:
             return previous_best_split
         return best_split
 
-    def feature_split(self, dataset, feature, previous_best_split):
+    def feature_split(self, dataset, feature_index, previous_best_split):
         """
         A method that splits data by a feature with non-numerical values
         and checks if the information gain of this split
@@ -120,12 +143,12 @@ class DecisionTree:
         """
         new_gain = previous_best_split['info_gain']
         best_split = {}
-        feature_values = np.unique(dataset[:, feature])
+        feature_values = np.unique(dataset[:, feature_index])
         sliced_data_list = []
         sliced_target_list = []
         targets = dataset[:, -1]
         for value in feature_values:
-            slice = np.array([row for row in dataset if row[feature] == value])
+            slice = np.array([row for row in dataset if row[feature_index] == value])
             sliced_data_list.append(slice)
             sliced_target_list.append(slice[:, -1])
         current_info_gain = self.information_gain(targets, sliced_target_list)
@@ -133,7 +156,7 @@ class DecisionTree:
             data_subsets = {}
             for index, value in enumerate(feature_values):
                 data_subsets[value] = sliced_data_list[index]
-            best_split = self.build_split(feature, data_subsets, None, current_info_gain)
+            best_split = self.build_split(feature_index, data_subsets, None, current_info_gain)
         if not best_split:
             return previous_best_split
         return best_split
@@ -158,7 +181,7 @@ class DecisionTree:
         for it, then returns it
         """
         best_split = {'info_gain': -float('inf')}
-        features, _ = self.split_data(dataset)
+        features = dataset[:, :-1]
         for feature in range(num_features):
             feature_values = np.unique(features[:, feature])
             if all(type(feat_val) in (int, float, np.float64) for feat_val in feature_values):
@@ -167,15 +190,6 @@ class DecisionTree:
                 best_split = self.feature_split(dataset, feature, best_split)
                 pass
         return best_split
-
-    def split_data(self, dataset):
-        """
-        A method that separates feature values and target feature values
-        in dataset and returns them
-        """
-        features = dataset[:, :-1]
-        targets = dataset[:, -1]
-        return features, targets
 
     def calculate_leaf_value(self, values):
         """
@@ -258,6 +272,13 @@ class DecisionTree:
             for answer, subnode in node.subnodes.items():
                 self.printer(subnode, indent + '  ', str(answer))
 
+    def begin_guessing(self):
+        """
+        A method that starts the guessing of the target feature value
+        and returns it
+        """
+        return self.root.guess()
+
 
 def coverage_test(X, Y, tree, features):
     """
@@ -288,6 +309,18 @@ def separate_data(data, target_feature):
     return X, Y, features
 
 
+def validate_choice(choice, possible_choices):
+    while choice not in possible_choices.keys():
+        choice = input('Unrecognized choice. Please choose again: ').strip()
+    return choice
+
+
+def validate_yes_no(choice):
+    while choice.lower() not in ['yes', 'no']:
+        choice = input('Unrecognized choice. Please choose again [Yes/No]: ').strip()
+    return True if choice.lower() == 'yes' else False
+
+
 def main():
     """
     Used for ongoing testing
@@ -298,6 +331,7 @@ def main():
     tree.fit(X, Y, features)
     tree.printer()
     print(coverage_test(X, Y, tree, features))
+    print(tree.begin_guessing())
     pass
 
 
