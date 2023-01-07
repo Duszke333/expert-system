@@ -58,20 +58,43 @@ class DecisionTree:
     """
     An object that creates a network of Nodes that form a decision tree
 
-    :param root: Node object, defaults to None, Node is assigned by self.fit() method;
-    It holds the first dataset splitting Node
+    :param target_name: str, name of the feature whose value will be guessed
 
-    :param max_tree_depth: int; determines how many split nodes can a tree branch have
+    :param features: list, a list of non-target feature names
+
+    :param data: NumPy array, segregated data where the target values are
+    located in the last column, the result of 'prepare_data' method
+
+    :param max_tree_depth: int, determines how many splits can a tree brach have,
+    its value is the number of non-target features
+
+    :param root: Node object, defaults to None if self.data is empty,
+    holds the core dataset splitting Node.
+    Value is the result of 'build_the_tree' function
     """
-    def __init__(self, max_tree_depth=2):
-        self.root = None
-        self.max_tree_depth = max_tree_depth
+    def __init__(self, data, target_feature):
+        self.target_name = target_feature
+        features = list(data.columns)
+        features.remove(target_feature)
+        self.features = features
+        self.data = self.prepare_data(data, self.target_name)
+        self.max_tree_depth = len(self.features)
+        self.root = self.build_the_tree(self.data) if np.any(self.data) else None
+
+    def prepare_data(self, data, target):
+        """
+        A method that changes given pandas DataFrame object to a NumPy array
+        where target feature values are located in the last column
+        """
+        other_feature_values = data.drop(columns=target).values
+        target_feature_values = data[[target]].values.reshape(-1, 1)
+        data = np.concatenate((other_feature_values, target_feature_values), axis=1)
+        return data
 
     def gini_index_calculator(self, target_data):
         """
-        A method that calculates the Gini index of a dataset
-        which is a probability of a specific feature being classified incorrectly
-        when picked randomly.
+        A method that calculates the Gini index of a dataset which is a probability
+        of a specific feature being classified incorrectly when picked randomly.
         The mathematic formula is: 1 - sum of squared probabilities of values being picked
         It returns a float number in <0; 1> range, where lower value is better
         """
@@ -161,13 +184,13 @@ class DecisionTree:
             return previous_best_split
         return best_split
 
-    def build_split(self, feature, data_subsets, threshold, gain):
+    def build_split(self, feature_index, data_subsets, threshold, gain):
         """
         A method that builds and returns a dictionary
         containing information about the data split
         """
         split = {
-            'feature': feature,
+            'feature': feature_index,
             'data_subsets': data_subsets,
             'threshold': threshold,
             'info_gain': gain
@@ -177,8 +200,8 @@ class DecisionTree:
     def get_best_split(self, dataset, num_features):
         """
         A method that checks every feature in given dataset and finds the best split
-        (calculated by calling numerical_split and feature_split functions)
-        for it, then returns it
+        (calculated by calling numerical_split and feature_split functions) for it,
+        then returns the 'best_split' dictionary which contains information about it
         """
         best_split = {'info_gain': -float('inf')}
         features = dataset[:, :-1]
@@ -198,57 +221,60 @@ class DecisionTree:
         values = list(values)
         return max(values, key=values.count)
 
-    def build_the_tree(self, dataset, features, current_depth=1):
+    def build_the_tree(self, dataset, current_depth=1):
         """
         A funcion that creates the network of Nodes that form a decision tree
         by splitting the data recursively until the max depth has been reached
         or smaller dataset cannot be split further, then creates proper Nodes
         and connects them into the network
         """
-        if current_depth <= self.max_tree_depth:
+        is_data_pure = len(np.unique(dataset[:, -1])) == 1
+        if current_depth <= self.max_tree_depth and not is_data_pure:
             num_features = np.shape(dataset)[1] - 1
             best_possible_split = self.get_best_split(dataset, num_features)
             if best_possible_split['info_gain'] > 0:
                 subnodes = {}
                 for feature_value, sliced_data in best_possible_split['data_subsets'].items():
-                    subnodes[feature_value] = self.build_the_tree(sliced_data, features, current_depth + 1)
+                    subnodes[feature_value] = self.build_the_tree(sliced_data, current_depth + 1)
                 feat_index = best_possible_split['feature']
-                feat = features[feat_index]
+                feat = self.features[feat_index]
                 return Node(feat, subnodes, best_possible_split['threshold'])
         leaf_value = self.calculate_leaf_value(dataset[:, -1])
         return Node(value=leaf_value)
 
-    def fit(self, X, Y, features):
+    def coverage(self):
         """
-        A method that puts the target feature values collumn on the end of dataset
-        and then sets the tree root to the Node network by calling build_the_tree method
+        A method that returns a list of target values
+        based on value arrays of a given dataset
         """
-        data = np.concatenate((X, Y), axis=1)
-        self.root = self.build_the_tree(data, features)
+        other_values = self.data[:, :-1]
+        target_values = self.data[:, -1]
+        predicted_values = [self.make_prediction(x) for x in other_values]
+        correct_predictions = 0
+        for index, y in enumerate(predicted_values):
+            if y == target_values[index]:
+                correct_predictions += 1
+        coverage_percentage = round(correct_predictions / len(predicted_values) * 100, 2)
+        correct_guesses = f'{correct_predictions} / {len(target_values)}'
+        return f'The data coverage is {coverage_percentage}% ({correct_guesses})'
 
-    def coverage(self, X, features):
-        """
-        A method that returns a list of results of matching
-        the target feature value to value arrays of a given dataset
-        """
-        coverage = [self.make_prediction(x, self.root, features) for x in X]
-        return coverage
-
-    def make_prediction(self, x, node, features):
+    def make_prediction(self, x, node=None):
         """
         A method that return the target feature value matched for the given
-        array of feature values
+        array of other features' values
         """
+        if not node:
+            node = self.root
         if node.value is not None:
             return node.value
-        feature_value = x[features.index(node.feature)]
+        feature_value = x[self.features.index(node.feature)]
         if node.threshold is not None:
             if feature_value <= node.threshold:
-                return self.make_prediction(x, node.subnodes['<='], features)
+                return self.make_prediction(x, node.subnodes['<='])
             else:
-                return self.make_prediction(x, node.subnodes['>'], features)
+                return self.make_prediction(x, node.subnodes['>'])
         else:
-            return self.make_prediction(x, node.subnodes[feature_value], features)
+            return self.make_prediction(x, node.subnodes[feature_value])
 
     def printer(self, node=None, indent='  ', answer=''):
         """
@@ -280,42 +306,23 @@ class DecisionTree:
         return self.root.guess()
 
 
-def coverage_test(X, Y, tree, features):
-    """
-    A function that returns the float value of the ratio of correct
-    predictions to the correct ones i. e. Checks the coverage
-    of the tree for data in the source file
-    and returns the information about it
-    """
-    predictions = tree.coverage(X, features)
-    correct_predictions = 0
-    for index, y in enumerate(predictions):
-        if y == Y[index]:
-            correct_predictions += 1
-    coverage_percentage = round(correct_predictions / len(predictions) * 100, 2)
-    correct_guesses = f'{correct_predictions} / {len(Y)}'
-    return f'The data coverage is {coverage_percentage}% ({correct_guesses})'
-
-
-def separate_data(data, target_feature):
-    """
-    A function that separates target feature values from other values
-    and returns them along with the list of other features' names
-    """
-    features = list(data.columns)
-    features.remove(target_feature)
-    X = data.drop(columns=target_feature).values
-    Y = data[[target_feature]].values.reshape(-1, 1)
-    return X, Y, features
-
-
 def validate_choice(choice, possible_choices):
+    """
+    A function that checks if the user input answer is present in given choice list.
+    If not, user will be asked again to answer until the choice is correct.
+    Function returns a valid user input choice
+    """
     while choice not in possible_choices.keys():
         choice = input('Unrecognized choice. Please choose again: ').strip()
     return choice
 
 
 def validate_yes_no(choice):
+    """
+    A function that checks if a yes/no answer is in fact a yes/no.
+    If not, user will be asked again to answer until the choice is correct.
+    Function returns a True / False depending on the answer (Yes / No)
+    """
     while choice.lower() not in ['yes', 'no']:
         choice = input('Unrecognized choice. Please choose again [Yes/No]: ').strip()
     return True if choice.lower() == 'yes' else False
@@ -326,11 +333,9 @@ def main():
     Used for ongoing testing
     """
     data = read_data('./drzewo decyzyjne/datasets/iris.csv')
-    X, Y, features = separate_data(data, 'Type')
-    tree = DecisionTree(len(features))
-    tree.fit(X, Y, features)
+    tree = DecisionTree(data, 'Type')
     tree.printer()
-    print(coverage_test(X, Y, tree, features))
+    print(tree.coverage())
     print(tree.begin_guessing())
     pass
 
