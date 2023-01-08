@@ -38,8 +38,8 @@ class Node:
         if self.value is not None:
             return self.value
         if self.threshold:
-            print(f'Does the "{self.feature}" feature value satisfy ', end='')
-            print(f'the inequality: <={self.threshold} [Yes/No]?')
+            print('Is the following inequality satisfied: ', end='')
+            print(f'{self.feature} <= {self.threshold}? [Yes/No]')
             choice = validate_yes_no(input('>>').strip())
             if choice is True:
                 return self.subnodes['<='].guess()
@@ -47,10 +47,14 @@ class Node:
                 return self.subnodes['>'].guess()
         else:
             possible_answers = list(self.subnodes.keys())
-            print('Please choose the value that matches the ', end='')
-            print(f'"{self.feature}" feature of your data object from the list below:')
-            print(possible_answers)
-            choice = validate_choice(input('>>').strip(), self.subnodes)
+            if sorted(possible_answers) == [False, True]:
+                print(f'Does the "{self.feature}" feature apply to your data? [Yes/No]')
+                choice = validate_yes_no(input('>>').strip())
+            else:
+                print('Please choose the value that matches the ', end='')
+                print(f'"{self.feature}" feature of your data from the list below:')
+                print(possible_answers)
+                choice = validate_choice(input('>>').strip(), self.subnodes.keys())
             return self.subnodes[choice].guess()
 
 
@@ -312,7 +316,7 @@ def validate_choice(choice, possible_choices):
     If not, user will be asked again to answer until the choice is correct.
     Function returns a valid user input choice
     """
-    while choice not in possible_choices.keys():
+    while choice not in possible_choices:
         choice = input('Unrecognized choice. Please choose again: ').strip()
     return choice
 
