@@ -227,7 +227,7 @@ class DecisionTree:
         }
         return split
 
-    def get_best_split(self, dataset, num_features):
+    def get_best_split(self, dataset):
         """
         A method that checks every feature in given dataset and finds the best split
         (calculated by calling numerical_split and feature_split functions) for it.
@@ -235,7 +235,7 @@ class DecisionTree:
         """
         best_split = {'info_gain': -float('inf')}
         features = dataset[:, :-1]
-        for feature in range(num_features):
+        for feature in range(len(self.features)):
             feature_values = np.unique(features[:, feature])
             num_types = (int, float, np.float64)
             if all(type(feature_value) in num_types for feature_value in feature_values):
@@ -261,8 +261,7 @@ class DecisionTree:
         """
         is_data_pure = len(np.unique(dataset[:, -1])) == 1
         if current_depth <= self.max_tree_depth and not is_data_pure:
-            num_features = np.shape(dataset)[1] - 1
-            best_possible_split = self.get_best_split(dataset, num_features)
+            best_possible_split = self.get_best_split(dataset)
             if best_possible_split['info_gain'] > 0:
                 subnodes = {}
                 for feature_value, sliced_data in best_possible_split['data_subsets'].items():

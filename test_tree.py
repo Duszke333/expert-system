@@ -307,7 +307,7 @@ def test_get_best_split_numerical_over_feature():
     expected_gain = tree.information_gain(data_to_split[:, -1],
                                           [expected_smaller[:, -1],
                                            expected_bigger[:, -1]])
-    split = tree.get_best_split(data_to_split, 2)
+    split = tree.get_best_split(data_to_split)
     assert split['feature'] == 1
     assert np.array_equal(split['data_subsets']['<='], expected_smaller)
     assert np.array_equal(split['data_subsets']['>'], expected_bigger)
@@ -341,7 +341,7 @@ def test_get_best_split_feature_over_numerical():
     expected_gain = tree.information_gain(data_to_split[:, -1],
                                           [expected_yes[:, -1],
                                            expected_no[:, -1]])
-    split = tree.get_best_split(data_to_split, 2)
+    split = tree.get_best_split(data_to_split)
     assert split['feature'] == 0
     assert np.array_equal(split['data_subsets']['Yes'], expected_yes)
     assert np.array_equal(split['data_subsets']['No'], expected_no)
