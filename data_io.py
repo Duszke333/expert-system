@@ -20,7 +20,7 @@ def read_data(path):
         return None
     except FileNotFoundError:
         print(f"No file found under path:\n{path}")
-        print('Please check if file exists and make sure to specify its extension')
+        print('Please check if file exists and make sure to specify its extension ', end='')
         print('or specify another file.')
         return None
     except OSError:
@@ -34,9 +34,9 @@ def read_data(path):
 
 def write_data(data, path):
     """
-    A function that saves given pandas DataFrame object to a .csv file
-    Prints a proper message and returns False if an exception occurs
-    Returns True if saving to a file was successful
+    A function that saves given pandas DataFrame object to a .csv file.
+    Prints a proper message and returns False if an exception occurs.
+    Returns True if saving to a file was successful.
     """
     try:
         data.to_csv(path, index=False)
@@ -53,22 +53,3 @@ def write_data(data, path):
         print('Please input correct path.')
         return False
     return True
-
-
-def main():
-    path = './drzewo decyzyjne/datasets/rower/rower.csv'
-    data = read_data('./drzewo decyzyjne/datasets/test_file.csv')
-    write_data(data, path)
-
-
-if __name__ == '__main__':
-    # main()
-    expected_data = {
-        'Outlook': ['Sunny', 'Overcast', 'Rainy'],
-        'Temperature': ['Hot', 'Hot', 'Cool'],
-        'Humidity': ['High', 'High', 'Normal'],
-        'Wind': ['Weak', 'Weak', 'Weak'],
-        'PlayGolf': ['No', 'Yes', 'Yes']
-    }
-    expected_function_result = pd.DataFrame(expected_data)
-    write_data(expected_function_result, './datasets/rower.csv')
