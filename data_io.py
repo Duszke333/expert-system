@@ -5,6 +5,7 @@ def read_data(path):
     """
     A function that reads data from a file under given path.
     Skips all lines in file with too many or too few values.
+    Removes duplicates from collected data.
     Prints a proper message and returns None if an exception occurs.
     Returns a pandas DataFrame object with data collected from file.
     """
@@ -28,6 +29,7 @@ def read_data(path):
         print('Please input correct path.')
         return None
     data.dropna(inplace=True)
+    data.drop_duplicates(inplace=True)
     data.reset_index(drop=True, inplace=True)
     return data
 
