@@ -1,4 +1,4 @@
-animal_name,hair,feathers,eggs,milk,airborne,aquatic,predator,toothed,backbone,breathes,venomous,fins,legs,tail,domestic,catsize,class_type
+animal name,has hair,has feathers,lays eggs,produces milk,is airborne,is aquatic,is predator,is toothed,has backbone,breathes,is venomous,has fins,how many legs,has tail,is domestic,is catsize,class type
 aardvark,True,False,False,True,False,False,True,True,True,True,False,False,4,False,False,True,Mammal
 antelope,True,False,False,True,False,False,False,True,True,True,False,False,4,True,False,True,Mammal
 bass,False,False,True,False,False,True,True,True,True,False,False,True,0,True,False,False,Fish
@@ -49,7 +49,7 @@ seawasp,False,False,True,False,False,True,True,False,False,False,True,False,0,Fa
 slowworm,False,False,True,False,False,False,True,True,True,True,False,False,0,True,False,False,Reptile
 slug,False,False,True,False,False,False,False,False,False,True,False,False,0,False,False,False,Invertebrate
 squirrel,True,False,False,True,False,False,False,True,True,True,False,False,2,True,False,False,Mammal
-starfish,False,False,True,False,False,True,True,False,False,False,False,False,Amphibian,False,False,False,Invertebrate
+starfish,False,False,True,False,False,True,True,False,False,False,False,False,0,False,False,False,Invertebrate
 stingray,False,False,True,False,False,True,True,True,True,False,True,True,0,True,False,True,Fish
 swan,False,True,True,False,True,True,False,False,True,True,False,False,2,True,False,True,Bird
 toad,False,False,True,False,False,True,False,True,True,True,False,False,4,False,False,False,Amphibian
