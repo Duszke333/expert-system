@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from main import add_new_rule_to_data, input_data_from_keyboard
+from main import add_new_rule_to_data, input_data_from_keyboard, fill_dataset_with_rules
 
 
 # The only tested functions are add_new_rule_to_data()
@@ -30,8 +30,8 @@ def test_add_new_rule_to_data_no_repeat(monkeypatch):
         dtype=object
     )
     expected_data_frame = pd.DataFrame(expected_data, columns=cols)
-    updated_data = add_new_rule_to_data(data_frame, 'Animal')
-    assert updated_data.equals(expected_data_frame)
+    add_new_rule_to_data(data_frame, 'Animal')
+    assert all(data_frame.eq(expected_data_frame)) is True
 
 
 def test_add_new_rule_to_data_identical_data(monkeypatch):
@@ -55,8 +55,8 @@ def test_add_new_rule_to_data_identical_data(monkeypatch):
         dtype=object
     )
     expected_data_frame = pd.DataFrame(expected_data, columns=cols)
-    updated_data = add_new_rule_to_data(data_frame, 'Animal')
-    assert updated_data.equals(expected_data_frame)
+    add_new_rule_to_data(data_frame, 'Animal')
+    assert all(data_frame.eq(expected_data_frame)) is True
 
 
 def test_add_new_rule_to_data_different_targets_no_replace(monkeypatch):
@@ -80,8 +80,8 @@ def test_add_new_rule_to_data_different_targets_no_replace(monkeypatch):
         dtype=object
     )
     expected_data_frame = pd.DataFrame(expected_data, columns=cols)
-    updated_data = add_new_rule_to_data(data_frame, 'Animal')
-    assert updated_data.equals(expected_data_frame)
+    add_new_rule_to_data(data_frame, 'Animal')
+    assert all(data_frame.eq(expected_data_frame)) is True
 
 
 def test_add_new_rule_to_data_different_targets_replace(monkeypatch):
@@ -104,11 +104,11 @@ def test_add_new_rule_to_data_different_targets_replace(monkeypatch):
         dtype=object
     )
     expected_data_frame = pd.DataFrame(expected_data, columns=cols)
-    updated_data = add_new_rule_to_data(data_frame, 'Animal')
-    assert updated_data.equals(expected_data_frame)
+    add_new_rule_to_data(data_frame, 'Animal')
+    assert all(data_frame.eq(expected_data_frame)) is True
 
 
-def test_input_from_keyboard_with_data_already(monkeypatch):
+def test_fill_dataset_with_rules(monkeypatch):
     inputs = iter(['Yes', '10', 'Rabbit', '', 'YeS', 'No', '0.5', 'Horse', '', 'nO', 'nO'])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     cols = ['Decision', 'Age', 'Animal']
@@ -131,7 +131,7 @@ def test_input_from_keyboard_with_data_already(monkeypatch):
     )
     expected_data_frame = pd.DataFrame(expected_data, columns=cols)
     expected_path = 'sample'
-    res_data_frame, path, target = input_data_from_keyboard(data_frame, expected_path, 'Animal')
+    res_data_frame, path, target = fill_dataset_with_rules(data_frame, expected_path, 'Animal')
     assert path == expected_path
     assert res_data_frame.equals(expected_data_frame)
     assert target == 'Animal'

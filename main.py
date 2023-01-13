@@ -52,7 +52,6 @@ def add_new_rule_to_data(data, resultant_feature):
     It prevents the user from repeating rules and, if the input rule is conflicting with
     already existing data (same values, different outcomes), it informs the user
     about this and asks him if he wants to replace the old rule with the new one.
-    Returns the updated dataset.
     """
     data_object_values = []
     for feature in data.columns:
@@ -74,8 +73,8 @@ def add_new_rule_to_data(data, resultant_feature):
             system('cls||clear')
             print('Error - rule already in database!')
             print('Please input another rule.')
-            data = data.drop_duplicates()
-            return add_new_rule_to_data(data, resultant_feature)
+            data.drop_duplicates(inplace=True)
+            add_new_rule_to_data(data, resultant_feature)
         else:
             print('Warning - rule with the same values but different outcome found!')
             print('The rules are:')
@@ -83,55 +82,64 @@ def add_new_rule_to_data(data, resultant_feature):
             print('Would you like to replace the old rule (the higher one)? [Yes/No]')
             replace = validate_yes_no(input('>>').strip())
             if replace:
-                data = data.drop_duplicates(subset=value_columns, keep='last')
+                data.drop_duplicates(subset=value_columns, inplace=True, keep='last')
                 data.reset_index(drop=True, inplace=True)
             else:
                 system('cls||clear')
                 print('Please input a new rule then.')
-                data = data.drop_duplicates(subset=value_columns)
-                return add_new_rule_to_data(data, resultant_feature)
-    print('Rule added successfully!')
-    input('Press ENTER to continue.\n')
-    system('cls||clear')
-    return data
-
-
-def input_data_from_keyboard(data=None, file_path=None, resultant_feature=None):
-    """
-    A function that lets user create a dataset and fill it with values.
-    It then asks the user if he wants to save it to a file.
-    Returns the created dataset, file path and the resultant feature label.
-    """
-    if data is None:
-        feature_names = []
-        print('Please input at least 2 different feature names.')
-        while True:
-            print('Please input the feature name', end='')
-            if len(feature_names) >= 2:
-                print(' or type "quit" to end adding', end='')
-            feature_name = input(':\n>>').strip()
-            while not feature_name:
-                print('Error - feature name must be given.')
-                feature_name = input('>>').strip()
-            while feature_name in feature_names:
-                print('Error - feature name has already been given.', end='')
-                feature_name = input('Please input another feature name\n>>').strip()
-            if feature_name.lower() == 'quit':
-                if len(feature_names) >= 2:
-                    break
-                else:
-                    print('Feature cannot be named "quit". Try again.')
-                    continue
-            feature_names.append(feature_name)
-        data = pd.DataFrame(columns=feature_names)
+                data.drop_duplicates(subset=value_columns, inplace=True)
+                add_new_rule_to_data(data, resultant_feature)
+    else:
+        print('Rule added successfully!')
+        input('Press ENTER to continue.\n')
         system('cls||clear')
-        resultant_feature = get_resultant_feature_name(feature_names)
+
+
+def input_data_from_keyboard():
+    """
+    A function that lets the user create an empty dataset,
+    then passes it to the input_data_from_keyboard_function(), where
+    the created dataset can be filled with rules.
+    Returns the filled dataset.
+    """
+    feature_names = []
+    print('Please input at least 2 different feature names.')
+    while True:
+        print('Please input the feature name', end='')
+        if len(feature_names) >= 2:
+            print(' or type "quit" to end adding', end='')
+        feature_name = input(':\n>>').strip()
+        while not feature_name:
+            print('Error - feature name must be given.')
+            feature_name = input('>>').strip()
+        while feature_name in feature_names:
+            print('Error - feature name has already been given.', end='')
+            feature_name = input('Please input another feature name\n>>').strip()
+        if feature_name.lower() == 'quit':
+            if len(feature_names) >= 2:
+                break
+            else:
+                print('Feature cannot be named "quit". Try again.')
+                continue
+        feature_names.append(feature_name)
+    data = pd.DataFrame(columns=feature_names)
+    system('cls||clear')
+    resultant_feature = get_resultant_feature_name(feature_names)
+    return fill_dataset_with_rules(data, None, resultant_feature)
+
+
+def fill_dataset_with_rules(data, file_path, resultant_feature):
+    """
+    A function that lets the user add more rules to the dataset.
+    It then asks the user if he wants to save it to a file.
+    Returns the updated dataset, file path and the resultant feature label.
+    """
     not_done_collecting_information = True
     data_object_index = 1
     print('Now please input at least 2 rules.')
     while not_done_collecting_information:
         print(f'Rule no. {data_object_index}:')
-        data = add_new_rule_to_data(data, resultant_feature)
+        add_new_rule_to_data(data, resultant_feature)
         data_object_index += 1
         done = input('Do you wish to add more rules? [Yes/No]\n>>').strip()
         not_done_collecting_information = validate_yes_no(done)
@@ -147,7 +155,7 @@ def import_and_input():
     Returns data and path to file
     """
     data, file_path, resultant_feature = import_from_file()
-    data, file_path, _ = input_data_from_keyboard(data, file_path, resultant_feature)
+    data, file_path, _ = fill_dataset_with_rules(data, file_path, resultant_feature)
     return data, file_path, resultant_feature
 
 
@@ -186,7 +194,7 @@ def learn(data, file_path, resultant_feature):
     """
     system('cls||clear')
     print('Please input a new rule so I can work properly next time.')
-    data = add_new_rule_to_data(data, resultant_feature)
+    add_new_rule_to_data(data, resultant_feature)
     file_path = ask_to_save_data(data, file_path)
     print('Tree will now be rebuilt.')
     tree = build_tree(data, resultant_feature)
@@ -231,7 +239,7 @@ def make_decision(tree, data, file_path):
     A function that asks the user questions and decides what the correct answer is.
     If the answer is not correct, it calls the learn() function to extend the database.
     """
-    print('You will be asked a series of questions.')
+    print('You will now be asked a series of questions.')
     print('Provided information will help determine the correct answer.')
     input('Press ENTER to continue.\n')
     the_decision = tree.decide()
@@ -240,7 +248,7 @@ def make_decision(tree, data, file_path):
     correct = validate_yes_no(correct)
     system('cls||clear')
     if not correct:
-        tree, file_path, data = learn(data, file_path, tree.target_name)
+        tree, file_path, data = learn(data, file_path, tree.outcome_header)
     print('Do you wish for me to make a decision again? [Yes/no]')
     if validate_yes_no(input('>>').strip()):
         system('cls||clear')
