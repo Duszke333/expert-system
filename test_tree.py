@@ -119,7 +119,7 @@ def test_init_tree_empty():
     sample_features = ['Dog', 'Bike', 'Doll']
     sample_data = pd.DataFrame(columns=sample_features)
     tree = DecisionTree(sample_data, 'Doll')
-    assert tree.target_name == 'Doll'
+    assert tree.outcome_header == 'Doll'
     assert tree.features == ['Dog', 'Bike']
     assert not tree.data
     assert tree.max_tree_depth == 2
