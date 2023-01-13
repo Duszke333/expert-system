@@ -1,6 +1,6 @@
-import main as mn
 import pandas as pd
 import numpy as np
+from main import add_new_rule_to_data, input_data_from_keyboard
 
 
 # The only tested functions are add_new_rule_to_data()
@@ -9,8 +9,8 @@ import numpy as np
 # (answer validation, reading data, writing data, creating the decision tree)
 
 
-def test_add_new_rule_to_data(monkeypatch):
-    inputs = iter(['   Yes ', '   10 ', '    Rabbit '])
+def test_add_new_rule_to_data_no_repeat(monkeypatch):
+    inputs = iter(['   Yes ', '   10 ', '    Rabbit ', ''])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     cols = ['Decision', 'Age', 'Animal']
     data = np.array([
@@ -30,11 +30,86 @@ def test_add_new_rule_to_data(monkeypatch):
         dtype=object
     )
     expected_data_frame = pd.DataFrame(expected_data, columns=cols)
-    assert all(mn.add_new_rule_to_data(data_frame) == expected_data_frame) is True
+    updated_data = add_new_rule_to_data(data_frame, 'Animal')
+    assert updated_data.equals(expected_data_frame)
+
+
+def test_add_new_rule_to_data_identical_data(monkeypatch):
+    inputs = iter(['Yes', '3', 'Dog', 'Yes', '10', 'Rabbit', ''])
+    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
+    cols = ['Decision', 'Age', 'Animal']
+    data = np.array([
+        ['Yes', 3, 'Dog'],
+        ['No', 5, 'Cat'],
+        ['No', 4, 'Dog'],
+        ['Yes', 7, 'Turtle']],
+        dtype=object
+    )
+    data_frame = pd.DataFrame(data, columns=cols)
+    expected_data = np.array([
+        ['Yes', 3, 'Dog'],
+        ['No', 5, 'Cat'],
+        ['No', 4, 'Dog'],
+        ['Yes', 7, 'Turtle'],
+        ['Yes', 10, 'Rabbit']],
+        dtype=object
+    )
+    expected_data_frame = pd.DataFrame(expected_data, columns=cols)
+    updated_data = add_new_rule_to_data(data_frame, 'Animal')
+    assert updated_data.equals(expected_data_frame)
+
+
+def test_add_new_rule_to_data_different_targets_no_replace(monkeypatch):
+    inputs = iter(['Yes', '3', 'Duck', 'No', 'Yes', '10', 'Rabbit', ''])
+    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
+    cols = ['Decision', 'Age', 'Animal']
+    data = np.array([
+        ['Yes', 3, 'Dog'],
+        ['No', 5, 'Cat'],
+        ['No', 4, 'Dog'],
+        ['Yes', 7, 'Turtle']],
+        dtype=object
+    )
+    data_frame = pd.DataFrame(data, columns=cols)
+    expected_data = np.array([
+        ['Yes', 3, 'Dog'],
+        ['No', 5, 'Cat'],
+        ['No', 4, 'Dog'],
+        ['Yes', 7, 'Turtle'],
+        ['Yes', 10, 'Rabbit']],
+        dtype=object
+    )
+    expected_data_frame = pd.DataFrame(expected_data, columns=cols)
+    updated_data = add_new_rule_to_data(data_frame, 'Animal')
+    assert updated_data.equals(expected_data_frame)
+
+
+def test_add_new_rule_to_data_different_targets_replace(monkeypatch):
+    inputs = iter(['Yes', '3', 'Duck', 'Yes', ''])
+    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
+    cols = ['Decision', 'Age', 'Animal']
+    data = np.array([
+        ['Yes', 3, 'Dog'],
+        ['No', 5, 'Cat'],
+        ['No', 4, 'Dog'],
+        ['Yes', 7, 'Turtle']],
+        dtype=object
+    )
+    data_frame = pd.DataFrame(data, columns=cols)
+    expected_data = np.array([
+        ['No', 5, 'Cat'],
+        ['No', 4, 'Dog'],
+        ['Yes', 7, 'Turtle'],
+        ['Yes', 3, 'Duck']],
+        dtype=object
+    )
+    expected_data_frame = pd.DataFrame(expected_data, columns=cols)
+    updated_data = add_new_rule_to_data(data_frame, 'Animal')
+    assert updated_data.equals(expected_data_frame)
 
 
 def test_input_from_keyboard_with_data_already(monkeypatch):
-    inputs = iter(['Yes', '10', 'Rabbit', 'YeS', 'No', '0.5', 'Horse', 'nO', 'nO'])
+    inputs = iter(['Yes', '10', 'Rabbit', '', 'YeS', 'No', '0.5', 'Horse', '', 'nO', 'nO'])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     cols = ['Decision', 'Age', 'Animal']
     data = np.array([
@@ -56,39 +131,43 @@ def test_input_from_keyboard_with_data_already(monkeypatch):
     )
     expected_data_frame = pd.DataFrame(expected_data, columns=cols)
     expected_path = 'sample'
-    res_data_frame, path = mn.input_data_from_keyboard(data_frame, expected_path)
+    res_data_frame, path, target = input_data_from_keyboard(data_frame, expected_path, 'Animal')
     assert path == expected_path
-    assert all(res_data_frame == expected_data_frame) is True
+    assert res_data_frame.equals(expected_data_frame)
+    assert target == 'Animal'
 
 
 def test_input_from_keyboard_no_data(monkeypatch):
-    inputs = iter(['Decision', 'Age', 'Animal', 'quit', 'Yes', '3', 'Dog', 'nO', 'nO'])
+    inputs = iter(['Decision', 'Age', 'Animal', 'quit', 'Animal', 'Yes', '3', 'Dog', '', 'nO', 'nO'])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     expected_cols = ['Decision', 'Age', 'Animal']
     expected_data = np.array([['Yes', 3, 'Dog']], dtype=object)
     expected_data_frame = pd.DataFrame(expected_data, columns=expected_cols)
-    data, path = mn.input_data_from_keyboard()
-    assert all(data == expected_data_frame) is True
+    data, path, target = input_data_from_keyboard()
+    assert all(data.eq(expected_data_frame)) is True
     assert path is None
+    assert target == 'Animal'
 
 
 def test_input_from_keyboard_quit_before_2_features(monkeypatch):
-    inputs = iter(['Decision', 'quit', 'Age', 'quit', 'Yes', '3', 'Dog', 'nO', 'nO'])
+    inputs = iter(['Decision', 'quit', 'Age', 'quit', 'Age', 'Yes', '3', 'Dog', 'nO', 'nO'])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     expected_cols = ['Decision', 'Age']
     expected_data = np.array([['Yes', 3]], dtype=object)
     expected_data_frame = pd.DataFrame(expected_data, columns=expected_cols)
-    data, path = mn.input_data_from_keyboard()
-    assert all(data == expected_data_frame) is True
+    data, path, target = input_data_from_keyboard()
+    assert all(data.eq(expected_data_frame)) is True
     assert path is None
+    assert target == 'Age'
 
 
 def test_input_from_keyboard_repeating_features(monkeypatch):
-    inputs = iter(['Decision', 'Age', 'Animal', 'Age', 'quit', 'Yes', '3', 'Dog', 'nO', 'nO'])
+    inputs = iter(['Decision', 'Age', 'Animal', 'Age', 'quit', 'Animal', 'Yes', '3', 'Dog', '', 'nO', 'nO'])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     expected_cols = ['Decision', 'Age', 'Animal']
     expected_data = np.array([['Yes', 3, 'Dog']], dtype=object)
     expected_data_frame = pd.DataFrame(expected_data, columns=expected_cols)
-    data, path = mn.input_data_from_keyboard()
-    assert all(data == expected_data_frame) is True
+    data, path, target = input_data_from_keyboard()
+    assert all(data.eq(expected_data_frame)) is True
     assert path is None
+    assert target == 'Animal'
