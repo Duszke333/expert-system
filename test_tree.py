@@ -6,10 +6,10 @@ from tree import validate_choice, validate_yes_no
 
 def test_init_node_empty():
     node = Node()
-    assert node.feature is None
-    assert node.subnodes is None
-    assert node.threshold is None
-    assert node.value is None
+    assert node._feature is None
+    assert node._subnodes is None
+    assert node._threshold is None
+    assert node._value is None
 
 
 def test_init_node_numerical():
@@ -20,11 +20,11 @@ def test_init_node_numerical():
         '>': node2
     }
     node = Node('sample', subnodes, 2.5)
-    assert node.feature == 'sample'
-    assert node.subnodes['<='] == node1
-    assert node.subnodes['>'] == node2
-    assert node.threshold == 2.5
-    assert node.value is None
+    assert node._feature == 'sample'
+    assert node._subnodes['<='] == node1
+    assert node._subnodes['>'] == node2
+    assert node._threshold == 2.5
+    assert node._value is None
 
 
 def test_init_node_not_numerical():
@@ -35,24 +35,24 @@ def test_init_node_not_numerical():
         'B': node2
     }
     node = Node('letter', subnodes)
-    assert node.feature == 'letter'
-    assert node.subnodes['A'] == node1
-    assert node.subnodes['B'] == node2
-    assert node.threshold is None
-    assert node.value is None
+    assert node._feature == 'letter'
+    assert node._subnodes['A'] == node1
+    assert node._subnodes['B'] == node2
+    assert node._threshold is None
+    assert node._value is None
 
 
 def test_init_leaf_node():
     node = Node(value='Dog')
-    assert node.feature is None
-    assert node.subnodes is None
-    assert node.threshold is None
-    assert node.value == 'Dog'
+    assert node._feature is None
+    assert node._subnodes is None
+    assert node._threshold is None
+    assert node._value == 'Dog'
 
 
 def test_guess_leaf_node():
     node = Node(value='Dog')
-    assert node.guess() == 'Dog'
+    assert node.make_a_decision() == 'Dog'
 
 
 def test_guess_numerical_node_smaller_value(monkeypatch):
@@ -67,7 +67,7 @@ def test_guess_numerical_node_smaller_value(monkeypatch):
     def mon_input(_):
         return '  Yes    '
     monkeypatch.setattr('builtins.input', mon_input)
-    assert node.guess() == 2
+    assert node.make_a_decision() == 2
 
 
 def test_guess_numerical_node_equal_value(monkeypatch):
@@ -82,7 +82,7 @@ def test_guess_numerical_node_equal_value(monkeypatch):
     def mon_input(_):
         return '  Yes    '
     monkeypatch.setattr('builtins.input', mon_input)
-    assert node.guess() == 2.5
+    assert node.make_a_decision() == 2.5
 
 
 def test_guess_numerical_node_higher_value(monkeypatch):
@@ -97,7 +97,7 @@ def test_guess_numerical_node_higher_value(monkeypatch):
     def mon_input(_):
         return '  nO    '
     monkeypatch.setattr('builtins.input', mon_input)
-    assert node.guess() == 3
+    assert node.make_a_decision() == 3
 
 
 def test_guess_not_numerical_node(monkeypatch):
@@ -112,7 +112,7 @@ def test_guess_not_numerical_node(monkeypatch):
     def mon_input(_):
         return 'A'
     monkeypatch.setattr('builtins.input', mon_input)
-    assert node.guess() == 'a'
+    assert node.make_a_decision() == 'a'
 
 
 def test_init_tree_empty():
@@ -490,7 +490,7 @@ def test_tree_begin_guessing():
     )
     df = pd.DataFrame(data, columns=['Decision', 'Age', 'Animal'])
     tree = DecisionTree(df, 'Animal')
-    assert tree.begin_guessing() == 'Dog'
+    assert tree.decide() == 'Dog'
 
 
 def test_tree_coverage():
