@@ -55,8 +55,11 @@ def add_new_rule_to_data(data, resultant_feature):
     """
     data_object_values = []
     for feature in data.columns:
-        print(f'Please input feature "{feature}" value')
+        print(f'Please input feature "{feature}" value:')
         feature_value = input('>>').strip()
+        while not feature_value:
+            print('Feature value cannot be empty! Please input again:')
+            feature_value = input('>>').strip()
         try:
             data_object_values.append(eval(feature_value))
         except Exception:
@@ -71,7 +74,8 @@ def add_new_rule_to_data(data, resultant_feature):
         new_outcome = data.iloc[-1][resultant_feature]
         if old_outcome == new_outcome:
             system('cls||clear')
-            print('Error - rule already in database!')
+            print('Error - rule already in database!: ')
+            print(data.iloc[[-1]], '\n')
             print('Please input another rule.')
             data.drop_duplicates(inplace=True)
             add_new_rule_to_data(data, resultant_feature)
@@ -113,8 +117,8 @@ def input_data_from_keyboard():
             print('Error - feature name must be given.')
             feature_name = input('>>').strip()
         while feature_name in feature_names:
-            print('Error - feature name has already been given.', end='')
-            feature_name = input('Please input another feature name\n>>').strip()
+            print('Error - feature name has already been given. ', end='')
+            feature_name = input('Please input another feature name:\n>>').strip()
         if feature_name.lower() == 'quit':
             if len(feature_names) >= 2:
                 break
@@ -141,8 +145,9 @@ def fill_dataset_with_rules(data, file_path, resultant_feature):
         print(f'Rule no. {data_object_index}:')
         add_new_rule_to_data(data, resultant_feature)
         data_object_index += 1
-        done = input('Do you wish to add more rules? [Yes/No]\n>>').strip()
-        not_done_collecting_information = validate_yes_no(done)
+        if data_object_index > 2:
+            done = input('Do you wish to add more rules? [Yes/No]\n>>').strip()
+            not_done_collecting_information = validate_yes_no(done)
         system('cls||clear')
     file_path = ask_to_save_data(data, file_path)
     return data, file_path, resultant_feature
@@ -238,7 +243,7 @@ def make_decision(tree, data, file_path):
     A function that asks the user questions and decides what the correct answer is.
     If the answer is not correct, it calls the learn() function to extend the database.
     """
-    tree.printer()
+    # tree.printer()
     print('The decision making process will now start.')
     print('You will be asked a series of questions.')
     print('Provided information will help determine the correct answer.')
