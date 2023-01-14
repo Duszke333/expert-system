@@ -114,7 +114,7 @@ class DecisionTree:
         where outcome values are located in the last column, then returns it.
         """
         other_feature_values = data.drop(columns=outcome_header).values
-        outcome_values = data[[outcome_header]].values.reshape(-1, 1)
+        outcome_values = data[[outcome_header]].values
         data = np.concatenate((other_feature_values, outcome_values), axis=1)
         return data
 

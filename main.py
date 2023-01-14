@@ -179,7 +179,6 @@ def build_tree(data, resultant_feature):
     tree = DecisionTree(data, resultant_feature)
     print('Done!')
     print(tree.coverage())
-    tree.printer()
     input('Press ENTER to continue.\n')
     system('cls||clear')
     return tree
@@ -239,7 +238,9 @@ def make_decision(tree, data, file_path):
     A function that asks the user questions and decides what the correct answer is.
     If the answer is not correct, it calls the learn() function to extend the database.
     """
-    print('You will now be asked a series of questions.')
+    tree.printer()
+    print('The decision making process will now start.')
+    print('You will be asked a series of questions.')
     print('Provided information will help determine the correct answer.')
     input('Press ENTER to continue.\n')
     the_decision = tree.decide()
@@ -262,6 +263,7 @@ def main():
     The main function of the program. It calls other functions in specific order.
     """
     try:
+        system('cls||clear')
         print("Welcome to the expert system.")
         data, file_path, resultant_feature = import_data_choice()
         tree = build_tree(data, resultant_feature)
