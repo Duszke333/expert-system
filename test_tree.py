@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from tree import Node, DecisionTree
-from tree import validate_choice, validate_yes_no
 
 
 def test_init_node_empty():
@@ -48,71 +47,6 @@ def test_init_leaf_node():
     assert node._subnodes is None
     assert node._threshold is None
     assert node._value == 'Dog'
-
-
-def test_guess_leaf_node():
-    node = Node(value='Dog')
-    assert node.make_a_decision() == 'Dog'
-
-
-def test_guess_numerical_node_smaller_value(monkeypatch):
-    node1 = Node(value=2)
-    node2 = Node(value=3)
-    subnodes = {
-        '<=': node1,
-        '>': node2
-    }
-    node = Node('sample', subnodes, 2.5)
-
-    def mon_input(_):
-        return '  Yes    '
-    monkeypatch.setattr('builtins.input', mon_input)
-    assert node.make_a_decision() == 2
-
-
-def test_guess_numerical_node_equal_value(monkeypatch):
-    node1 = Node(value=2.5)
-    node2 = Node(value=3)
-    subnodes = {
-        '<=': node1,
-        '>': node2
-    }
-    node = Node('sample', subnodes, 2.5)
-
-    def mon_input(_):
-        return '  Yes    '
-    monkeypatch.setattr('builtins.input', mon_input)
-    assert node.make_a_decision() == 2.5
-
-
-def test_guess_numerical_node_higher_value(monkeypatch):
-    node1 = Node(value=2)
-    node2 = Node(value=3)
-    subnodes = {
-        '<=': node1,
-        '>': node2
-    }
-    node = Node('sample', subnodes, 2.5)
-
-    def mon_input(_):
-        return '  nO    '
-    monkeypatch.setattr('builtins.input', mon_input)
-    assert node.make_a_decision() == 3
-
-
-def test_guess_not_numerical_node(monkeypatch):
-    node1 = Node(value='a')
-    node2 = Node(value='b')
-    subnodes = {
-        'A': node1,
-        'B': node2
-    }
-    node = Node('letter', subnodes)
-
-    def mon_input(_):
-        return 'A'
-    monkeypatch.setattr('builtins.input', mon_input)
-    assert node.make_a_decision() == 'a'
 
 
 def test_init_tree_empty():
@@ -481,18 +415,6 @@ def test_tree_build_the_tree_not_enough_depth():
     assert bigger_node.value == 'Cat'
 
 
-def test_tree_begin_guessing():
-    data = np.array([
-        ['Yes', 3, 'Dog'],
-        ['No', 5, 'Dog'],
-        ['Yes', 4, 'Dog']],
-        dtype=object
-    )
-    df = pd.DataFrame(data, columns=['Decision', 'Age', 'Animal'])
-    tree = DecisionTree(df, 'Animal')
-    assert tree.decide() == 'Dog'
-
-
 def test_tree_coverage():
     data = np.array([
         ['Yes', 3, 'Dog'],
@@ -520,42 +442,3 @@ def test_tree_make_prediction():
     assert tree.make_prediction(np.array(['No', 5], dtype=object)) == 'Cat'
     assert tree.make_prediction(np.array(['No', 4], dtype=object)) == 'Dog'
     assert tree.make_prediction(np.array(['Yes', 7], dtype=object)) == 'Turtle'
-
-
-def test_validate_choice_already_valid():
-    first_choice = 'Bike'
-    choices = {
-        'Bike': True,
-        'Dog': 4,
-        'Doll': None
-    }
-    assert validate_choice(first_choice, choices) == first_choice
-
-
-def test_validate_choice_invalid_first(monkeypatch):
-    inputs = iter(['Bob', 'Cat', '    Dog '])
-    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
-    first_choice = 'Monk'
-    choices = {
-        'Bike': True,
-        'Dog': 4,
-        'Doll': None
-    }
-    assert validate_choice(first_choice, choices) == 'Dog'
-
-
-def test_validate_yes_no_already_valid():
-    assert validate_yes_no('YeS') is True
-    assert validate_yes_no('nO') is False
-
-
-def test_validate_yes_no_first_invalid_no(monkeypatch):
-    inputs = iter(['Bob', 'Cat', '    No '])
-    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
-    assert validate_yes_no('Bike') is False
-
-
-def test_validate_yes_no_first_invalid_yes(monkeypatch):
-    inputs = iter(['Bob', 'Cat', '    yEs '])
-    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
-    assert validate_yes_no('Bike') is True

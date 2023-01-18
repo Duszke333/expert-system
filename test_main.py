@@ -1,12 +1,55 @@
 import pandas as pd
 import numpy as np
+from main import validate_choice, validate_yes_no
 from main import add_new_rule_to_data, input_data_from_keyboard, fill_dataset_with_rules
+from main import determine_decision
+from tree import Node
 
 
 # The only tested functions are add_new_rule_to_data()
 # and input_from_keyboard() as every remaining function in that file
 # relies on functions from different files that have already been tested
 # (answer validation, reading data, writing data, creating the decision tree)
+
+
+def test_validate_choice_already_valid():
+    first_choice = 'Bike'
+    choices = {
+        'Bike': True,
+        'Dog': 4,
+        'Doll': None
+    }
+    assert validate_choice(first_choice, choices) == first_choice
+
+
+def test_validate_choice_invalid_first(monkeypatch):
+    inputs = iter(['Bob', 'Cat', '    Dog '])
+    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
+    first_choice = 'Monk'
+    choices = {
+        'Bike': True,
+        'Dog': 4,
+        'Doll': None
+    }
+    assert validate_choice(first_choice, choices) == 'Dog'
+
+
+def test_validate_yes_no_already_valid():
+    assert validate_yes_no('YeS') is True
+    assert validate_yes_no('nO') is False
+
+
+def test_validate_yes_no_first_invalid_no(monkeypatch):
+    inputs = iter(['Bob', 'Cat', '    No '])
+    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
+    assert validate_yes_no('Bike') is False
+
+
+def test_validate_yes_no_first_invalid_yes(monkeypatch):
+    inputs = iter(['Bob', 'Cat', '    yEs '])
+    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
+    assert validate_yes_no('Bike') is True
+
 
 
 def test_add_new_rule_to_data_no_repeat(monkeypatch):
@@ -196,3 +239,98 @@ def test_input_from_keyboard_repeating_features(monkeypatch):
     assert all(data.eq(expected_data_frame)) is True
     assert path is None
     assert target == 'Animal'
+
+
+def test_determine_decision_leaf_node():
+    node = Node(value='Dog')
+    assert determine_decision(node) == 'Dog'
+
+
+def test_determine_decision_numerical_node_smaller_value(monkeypatch):
+    node1 = Node(value=2)
+    node2 = Node(value=3)
+    subnodes = {
+        '<=': node1,
+        '>': node2
+    }
+    node = Node('sample', subnodes, 2.5)
+
+    def mon_input(_):
+        return '  Yes    '
+    monkeypatch.setattr('builtins.input', mon_input)
+    assert determine_decision(node) == 2
+
+
+def test_determine_decision_numerical_node_equal_value(monkeypatch):
+    node1 = Node(value=2.5)
+    node2 = Node(value=3)
+    subnodes = {
+        '<=': node1,
+        '>': node2
+    }
+    node = Node('sample', subnodes, 2.5)
+
+    def mon_input(_):
+        return '  Yes    '
+    monkeypatch.setattr('builtins.input', mon_input)
+    assert determine_decision(node) == 2.5
+
+
+def test_determine_decision_numerical_node_higher_value(monkeypatch):
+    node1 = Node(value=2)
+    node2 = Node(value=3)
+    subnodes = {
+        '<=': node1,
+        '>': node2
+    }
+    node = Node('sample', subnodes, 2.5)
+
+    def mon_input(_):
+        return '  nO    '
+    monkeypatch.setattr('builtins.input', mon_input)
+    assert determine_decision(node) == 3
+
+
+def test_determine_decision_not_numerical_node(monkeypatch):
+    node1 = Node(value='a')
+    node2 = Node(value='b')
+    subnodes = {
+        'A': node1,
+        'B': node2
+    }
+    node = Node('letter', subnodes)
+
+    def mon_input(_):
+        return 'A'
+    monkeypatch.setattr('builtins.input', mon_input)
+    assert determine_decision(node) == 'a'
+
+
+def test_determine_decision_bool_true(monkeypatch):
+    node1 = Node(value='a')
+    node2 = Node(value='b')
+    subnodes = {
+        True: node1,
+        False: node2
+    }
+    node = Node('letter', subnodes)
+
+    def mon_input(_):
+        return '  yEs '
+    monkeypatch.setattr('builtins.input', mon_input)
+    assert determine_decision(node) == 'a'
+
+
+def test_determine_decision_bool_false(monkeypatch):
+    node1 = Node(value='a')
+    node2 = Node(value='b')
+    subnodes = {
+        True: node1,
+        False: node2
+    }
+    node = Node('letter', subnodes)
+
+    def mon_input(_):
+        return '  nO '
+    monkeypatch.setattr('builtins.input', mon_input)
+    assert determine_decision(node) == 'b'

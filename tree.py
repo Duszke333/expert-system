@@ -51,35 +51,6 @@ class Node:
         """Getter for value."""
         return self._value
 
-    def make_a_decision(self, question_number=1):
-        """
-        An interactive method that asks the user questions, determines the
-        outcome based on his answers and returns it.
-        """
-        system('cls||clear')
-        if self.value is not None:
-            return self.value
-        print(f'Question no. {question_number}:')
-        if self.threshold:
-            print('Is the following inequality satisfied: ', end='')
-            print(f'{self.feature} <= {self.threshold}? [Yes/No]')
-            choice = validate_yes_no(input('>>').strip())
-            if choice is True:
-                return self.subnodes['<='].make_a_decision(question_number + 1)
-            else:
-                return self.subnodes['>'].make_a_decision(question_number + 1)
-        else:
-            possible_answers = list(self.subnodes.keys())
-            if sorted(possible_answers) == [False, True]:
-                print(f'Does the "{self.feature}" feature apply to your data? [Yes/No]')
-                choice = validate_yes_no(input('>>').strip())
-            else:
-                print('Please choose the value that matches the ', end='')
-                print(f'"{self.feature}" feature of your data from the list below:')
-                print(possible_answers)
-                choice = validate_choice(input('>>').strip(), self.subnodes.keys())
-            return self.subnodes[choice].make_a_decision(question_number + 1)
-
 
 class DecisionTree:
     """
@@ -328,32 +299,3 @@ class DecisionTree:
             print(message)
             for answer, subnode in node.subnodes.items():
                 self.printer(subnode, indent + '  ', str(answer))
-
-    def decide(self):
-        """
-        A method that starts the decision making process.
-        Returns the found outcome value.
-        """
-        return self.root.make_a_decision()
-
-
-def validate_choice(choice, possible_choices):
-    """
-    A function that checks whether the user input answer is present in given choice list.
-    If not, user will be asked again to answer until the choice is correct.
-    Function returns the valid user input choice.
-    """
-    while choice not in possible_choices:
-        choice = input('Unrecognized choice. Please choose again: ').strip()
-    return choice
-
-
-def validate_yes_no(choice):
-    """
-    A function that checks if a yes/no answer is in fact a yes/no.
-    If not, user will be asked again to answer until the choice is correct.
-    Returns a True / False depending on the answer (Yes / No).
-    """
-    while choice.lower() not in ['yes', 'no']:
-        choice = input('Unrecognized choice. Please choose again [Yes/No]: ').strip()
-    return True if choice.lower() == 'yes' else False

@@ -1,8 +1,29 @@
 import pandas as pd
 from tree import DecisionTree
-from tree import validate_choice, validate_yes_no
 from data_io import read_data, write_data
 from os import system
+
+
+def validate_choice(choice, possible_choices):
+    """
+    A function that checks whether the user input answer is present in given choice list.
+    If not, user will be asked again to answer until the choice is correct.
+    Function returns the valid user input choice.
+    """
+    while choice not in possible_choices:
+        choice = input('Unrecognized choice. Please choose again: ').strip()
+    return choice
+
+
+def validate_yes_no(choice):
+    """
+    A function that checks if a yes/no answer is in fact a yes/no.
+    If not, user will be asked again to answer until the choice is correct.
+    Returns a True / False depending on the answer (Yes / No).
+    """
+    while choice.lower() not in ['yes', 'no']:
+        choice = input('Unrecognized choice. Please choose again [Yes/No]: ').strip()
+    return True if choice.lower() == 'yes' else False
 
 
 def import_data_choice():
@@ -238,6 +259,36 @@ def upload_data_to_file(data, file_path):
     return file_path
 
 
+def determine_decision(node, question_number=1):
+    """
+    A function that asks the user questions, determines the
+    outcome based on his answers and returns it.
+    """
+    system('cls||clear')
+    if node.value is not None:
+        return node.value
+    print(f'Question no. {question_number}:')
+    if node.threshold:
+        print('Is the following inequality satisfied: ', end='')
+        print(f'{node.feature} <= {node.threshold}? [Yes/No]')
+        choice = validate_yes_no(input('>>').strip())
+        if choice is True:
+            return determine_decision(node.subnodes['<='], question_number + 1)
+        else:
+            return determine_decision(node.subnodes['>'], question_number + 1)
+    else:
+        possible_answers = list(node.subnodes.keys())
+        if sorted(possible_answers) == [False, True]:
+            print(f'Does the "{node.feature}" feature apply to your data? [Yes/No]')
+            choice = validate_yes_no(input('>>').strip())
+        else:
+            print('Please choose the value that matches the ', end='')
+            print(f'"{node.feature}" feature of your data from the list below:')
+            print(possible_answers)
+            choice = validate_choice(input('>>').strip(), node.subnodes.keys())
+        return determine_decision(node.subnodes[choice], question_number + 1)
+
+
 def make_decision(tree, data, file_path):
     """
     A function that asks the user questions and decides what the correct answer is.
@@ -248,7 +299,7 @@ def make_decision(tree, data, file_path):
     print('You will be asked a series of questions.')
     print('Provided information will help determine the correct answer.')
     input('Press ENTER to continue.\n')
-    the_decision = tree.decide()
+    the_decision = determine_decision(tree.root)
     print(f'The suggested decision is: {the_decision}.')
     correct = input('Is it correct? [Yes/No]\n>>').strip()
     correct = validate_yes_no(correct)
