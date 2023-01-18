@@ -1,5 +1,4 @@
 import numpy as np
-from os import system
 
 
 class Node:
@@ -77,6 +76,7 @@ class DecisionTree:
         self.features = features
         self.data = self.prepare_data(data, self.outcome_header)
         self.max_tree_depth = len(self.features)
+        # self.max_tree_depth = float('inf')
         self.root = self.build_the_tree(self.data) if np.any(self.data) else None
 
     def prepare_data(self, data, outcome_header):
