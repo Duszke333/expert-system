@@ -230,9 +230,9 @@ class DecisionTree:
         Returns the 'best_split' dictionary which contains information about the split.
         """
         best_split = {'info_gain': -float('inf')}
-        variables = dataset[:, :-1]
+        all_variables_values = dataset[:, :-1]
         for variable_index in range(len(self.variables)):
-            variable_values = np.unique(variables[:, variable_index])
+            variable_values = np.unique(all_variables_values[:, variable_index])
             num_types = (int, float, np.float64)
             if all(type(variable_value) in num_types for variable_value in variable_values):
                 best_split = self.numerical_split(dataset, variable_index, best_split)
@@ -268,22 +268,6 @@ class DecisionTree:
         leaf_value = self.calculate_leaf_value(dataset[:, -1])
         return Node(decision=leaf_value)
 
-    def coverage(self):
-        """
-        A method that calculates the coverage of the decision tree,
-        which is the ratio of correct decisions made to the number of given rules.
-        Returns a string informing about the result.
-        """
-        other_values = self.data[:, :-1]
-        outcome_values = self.data[:, -1]
-        predicted_values = [self.make_prediction(x) for x in other_values]
-        correct_predictions = 0
-        for index, y in enumerate(predicted_values):
-            if y == outcome_values[index]:
-                correct_predictions += 1
-        coverage_percentage = round(correct_predictions / len(predicted_values) * 100, 2)
-        correct_decisions = f'{correct_predictions} / {len(outcome_values)}'
-        return f'The data coverage is {coverage_percentage}% ({correct_decisions})'
 
     def make_prediction(self, x, node=None):
         """
@@ -302,6 +286,23 @@ class DecisionTree:
                 return self.make_prediction(x, node.subnodes['>'])
         else:
             return self.make_prediction(x, node.subnodes[feature_value])
+
+    def coverage(self):
+        """
+        A method that calculates the coverage of the decision tree,
+        which is the ratio of correct decisions made to the number of given rules.
+        Returns a string informing about the result.
+        """
+        other_values = self.data[:, :-1]
+        outcome_values = self.data[:, -1]
+        predicted_values = [self.make_prediction(x) for x in other_values]
+        correct_predictions = 0
+        for index, y in enumerate(predicted_values):
+            if y == outcome_values[index]:
+                correct_predictions += 1
+        coverage_percentage = round(correct_predictions / len(predicted_values) * 100, 2)
+        correct_decisions = f'{correct_predictions} / {len(outcome_values)}'
+        return f'The data coverage is {coverage_percentage}% ({correct_decisions})'
 
     def printer(self, node=None, indent='  ', answer=''):
         """
