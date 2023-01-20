@@ -36,13 +36,11 @@ def import_data_choice():
     text_data_input_choices = """
     1: Import from csv file
     2: Input from keyboard
-    3: Import from csv file and input from keyboard
-    4: Exit program"""
+    3: Import from csv file and input from keyboard"""
     data_input_choices = {
         '1': import_from_file,
         '2': input_data_from_keyboard,
         '3': import_and_input,
-        '4': exit
     }
     print("Choose how do you want to input rules or if you want to exit:", end='')
     print(text_data_input_choices)

@@ -216,7 +216,7 @@ def test_build_split():
     assert split['info_gain'] == 1
 
 
-def test_determine_best_split_numerical_over_feature():
+def test_determine_best_split_numerical_over_variable():
     sample_variables = ['Dog', 'Bike', 'Doll']
     sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
@@ -250,7 +250,7 @@ def test_determine_best_split_numerical_over_feature():
     assert split['info_gain'] == expected_gain
 
 
-def test_determine_best_split_feature_over_numerical():
+def test_determine_best_split_variable_over_numerical():
     sample_variables = ['Dog', 'Bike', 'Doll']
     sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
@@ -327,7 +327,7 @@ def test_tree_build_the_tree_simple():
     assert root.decision == 'Dog'
 
 
-def test_tree_build_the_tree_with_feature_split():
+def test_tree_build_the_tree_with_variable_split():
     sample_variables = ['Dog', 'Bike', 'Doll']
     sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')

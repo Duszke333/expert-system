@@ -6,8 +6,7 @@ from main import determine_decision
 from tree import Node
 
 
-# The only tested functions are add_new_rule_to_data()
-# and input_from_keyboard() as every remaining function in that file
+# not all functions in the file are tested as most of them
 # relies on functions from different files that have already been tested
 # (answer validation, reading data, writing data, creating the decision tree)
 
@@ -59,7 +58,6 @@ def test_validate_yes_no_first_invalid_yes(monkeypatch):
     inputs = iter(['Bike', 'Bob', 'Cat', '    yEs '])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     assert validate_yes_no() is True
-
 
 
 def test_add_new_rule_to_data_no_repeat(monkeypatch):
@@ -216,7 +214,8 @@ def test_fill_dataset_with_rules(monkeypatch):
 
 
 def test_input_from_keyboard_no_data(monkeypatch):
-    inputs = iter(['Decision', 'Age', 'Animal', 'quit', 'Animal', 'Yes', '3', 'Dog', '', 'Yes', '5', 'Duck', '', 'nO', 'nO'])
+    inputs = iter(['Decision', 'Age', 'Animal', 'quit', 'Animal', 'Yes', '3', 'Dog',
+                   '', 'Yes', '5', 'Duck', '', 'nO', 'nO'])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     expected_cols = ['Decision', 'Age', 'Animal']
     expected_data = np.array([['Yes', 3, 'Dog'], ['Yes', 5, 'Duck']], dtype=object)
@@ -227,7 +226,7 @@ def test_input_from_keyboard_no_data(monkeypatch):
     assert target == 'Animal'
 
 
-def test_input_from_keyboard_quit_before_2_features(monkeypatch):
+def test_input_from_keyboard_quit_before_2_variables(monkeypatch):
     inputs = iter(['Decision', 'quit', 'Age', 'quit', 'Age', 'Yes', '3', 'Dog', '5', 'Duck', '', 'nO', 'nO'])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     expected_cols = ['Decision', 'Age']
@@ -239,8 +238,9 @@ def test_input_from_keyboard_quit_before_2_features(monkeypatch):
     assert target == 'Age'
 
 
-def test_input_from_keyboard_repeating_features(monkeypatch):
-    inputs = iter(['Decision', 'Age', 'Animal', 'Age', 'quit', 'Animal', 'Yes', '3', 'Dog', '', 'Yes', '5', 'Duck', '', 'nO', 'nO'])
+def test_input_from_keyboard_repeating_variables(monkeypatch):
+    inputs = iter(['Decision', 'Age', 'Animal', 'Age', 'quit', 'Animal', 'Yes', '3', 'Dog',
+                   '', 'Yes', '5', 'Duck', '', 'nO', 'nO'])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
     expected_cols = ['Decision', 'Age', 'Animal']
     expected_data = np.array([['Yes', 3, 'Dog'], ['Yes', 5, 'Duck']], dtype=object)

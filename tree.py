@@ -112,15 +112,15 @@ class DecisionTree:
         A method that changes given pandas DataFrame object to a NumPy array
         where outcome values are located in the last column, then returns it.
         """
-        other_feature_values = data.drop(columns=self.outcome_header).values
+        other_variable_values = data.drop(columns=self.outcome_header).values
         outcome_values = data[[self.outcome_header]].values
-        data = np.concatenate((other_feature_values, outcome_values), axis=1)
+        data = np.concatenate((other_variable_values, outcome_values), axis=1)
         return data
 
     def gini_index_calculator(self, outcome_values):
         """
         A method that calculates the Gini index of a dataset which is a probability
-        of a specific feature being classified incorrectly when picked randomly.
+        of a specific variable being classified incorrectly when picked randomly.
         The mathematic formula is: 1 - sum of squared probabilities of values being picked.
         Returns a float number in <0; 1> range, where lower value is better.
         """
@@ -280,14 +280,14 @@ class DecisionTree:
             node = self.root
         if node.decision is not None:
             return node.decision
-        feature_value = x[self.variables.index(node.variable)]
+        variable_value = x[self.variables.index(node.variable)]
         if node.threshold is not None:
-            if feature_value <= node.threshold:
+            if variable_value <= node.threshold:
                 return self.make_prediction(x, node.subnodes['<='])
             else:
                 return self.make_prediction(x, node.subnodes['>'])
         else:
-            return self.make_prediction(x, node.subnodes[feature_value])
+            return self.make_prediction(x, node.subnodes[variable_value])
 
     def accuracy(self):
         """
