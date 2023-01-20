@@ -294,7 +294,7 @@ def make_decision(tree, data, file_path):
     A function that asks the user questions and decides what the correct answer is.
     If the answer is not correct, it calls the learn() function to extend the database.
     """
-    tree.printer()
+    # tree.printer()
     print('The decision making process will now start.')
     print('You will be asked a series of questions.')
     print('Provided information will help determine the correct answer.')
