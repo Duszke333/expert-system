@@ -81,7 +81,7 @@ def add_new_rule_to_data(data, outcome_variable):
         print(f'Please input variable "{variable}" value:')
         variable_value = input('>>').strip()
         while not variable_value:
-            print('Feature value cannot be empty! Please input again:')
+            print('Variable value cannot be empty! Please input again:')
             variable_value = input('>>').strip()
         try:
             data_object_values.append(eval(variable_value))
@@ -192,9 +192,9 @@ def get_outcome_variable_name(list_of_variables):
     """
     print('Please choose the outcome variable from variables listed below:')
     print(list_of_variables)
-    resultant_feature = validate_choice(list_of_variables)
+    outcome_variable = validate_choice(list_of_variables)
     system('cls||clear')
-    return resultant_feature
+    return outcome_variable
 
 
 def build_tree(data, outcome_variable):
@@ -210,7 +210,7 @@ def build_tree(data, outcome_variable):
     return tree
 
 
-def learn(data, file_path, resultant_feature):
+def learn(data, file_path, outcome_variable):
     """
     A function that extends the database with a new rule
     and asks to save it to a file,
@@ -219,10 +219,10 @@ def learn(data, file_path, resultant_feature):
     """
     system('cls||clear')
     print('Please input a new rule so I can work properly next time.')
-    add_new_rule_to_data(data, resultant_feature)
+    add_new_rule_to_data(data, outcome_variable)
     file_path = ask_to_save_data(data, file_path)
     print('Tree will now be rebuilt.')
-    tree = build_tree(data, resultant_feature)
+    tree = build_tree(data, outcome_variable)
     return tree, file_path, data
 
 
@@ -294,7 +294,7 @@ def make_decision(tree, data, file_path):
     A function that asks the user questions and decides what the correct answer is.
     If the answer is not correct, it calls the learn() function to extend the database.
     """
-    # tree.printer()
+    tree.printer()
     print('The decision making process will now start.')
     print('You will be asked a series of questions.')
     print('Provided information will help determine the correct answer.')
@@ -321,8 +321,8 @@ def main():
     try:
         system('cls||clear')
         print("Welcome to the expert system.")
-        data, file_path, resultant_feature = import_data_choice()
-        tree = build_tree(data, resultant_feature)
+        data, file_path, outcome_variable = import_data_choice()
+        tree = build_tree(data, outcome_variable)
         make_decision(tree, data, file_path)
     except (KeyboardInterrupt, EOFError):
         system('cls||clear')
