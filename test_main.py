@@ -12,43 +12,53 @@ from tree import Node
 # (answer validation, reading data, writing data, creating the decision tree)
 
 
-def test_validate_choice_already_valid():
-    first_choice = 'Bike'
+def test_validate_choice_already_valid(monkeypatch):
+    def mon_input(_):
+        return 'Bike'
     choices = {
         'Bike': True,
         'Dog': 4,
         'Doll': None
     }
-    assert validate_choice(first_choice, choices) == first_choice
+    monkeypatch.setattr('builtins.input', mon_input)
+    assert validate_choice(choices) == 'Bike'
 
 
 def test_validate_choice_invalid_first(monkeypatch):
-    inputs = iter(['Bob', 'Cat', '    Dog '])
+    inputs = iter(['Monk', 'Bob', 'Cat', '    Dog '])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
-    first_choice = 'Monk'
     choices = {
         'Bike': True,
         'Dog': 4,
         'Doll': None
     }
-    assert validate_choice(first_choice, choices) == 'Dog'
+    assert validate_choice(choices) == 'Dog'
 
 
-def test_validate_yes_no_already_valid():
-    assert validate_yes_no('YeS') is True
-    assert validate_yes_no('nO') is False
+def test_validate_yes_no_already_yes(monkeypatch):
+    def mon_input(_):
+        return 'YeS'
+    monkeypatch.setattr('builtins.input', mon_input)
+    assert validate_yes_no() is True
+
+
+def test_validate_yes_no_already_no(monkeypatch):
+    def mon_input(_):
+        return 'nO'
+    monkeypatch.setattr('builtins.input', mon_input)
+    assert validate_yes_no() is False
 
 
 def test_validate_yes_no_first_invalid_no(monkeypatch):
-    inputs = iter(['Bob', 'Cat', '    No '])
+    inputs = iter(['Bike', 'Bob', 'Cat', '    No '])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
-    assert validate_yes_no('Bike') is False
+    assert validate_yes_no() is False
 
 
 def test_validate_yes_no_first_invalid_yes(monkeypatch):
-    inputs = iter(['Bob', 'Cat', '    yEs '])
+    inputs = iter(['Bike', 'Bob', 'Cat', '    yEs '])
     monkeypatch.setattr('builtins.input', lambda _: next(inputs))
-    assert validate_yes_no('Bike') is True
+    assert validate_yes_no() is True
 
 
 
@@ -242,13 +252,13 @@ def test_input_from_keyboard_repeating_features(monkeypatch):
 
 
 def test_determine_decision_leaf_node():
-    node = Node(value='Dog')
+    node = Node(decision='Dog')
     assert determine_decision(node) == 'Dog'
 
 
 def test_determine_decision_numerical_node_smaller_value(monkeypatch):
-    node1 = Node(value=2)
-    node2 = Node(value=3)
+    node1 = Node(decision=2)
+    node2 = Node(decision=3)
     subnodes = {
         '<=': node1,
         '>': node2
@@ -262,8 +272,8 @@ def test_determine_decision_numerical_node_smaller_value(monkeypatch):
 
 
 def test_determine_decision_numerical_node_equal_value(monkeypatch):
-    node1 = Node(value=2.5)
-    node2 = Node(value=3)
+    node1 = Node(decision=2.5)
+    node2 = Node(decision=3)
     subnodes = {
         '<=': node1,
         '>': node2
@@ -277,8 +287,8 @@ def test_determine_decision_numerical_node_equal_value(monkeypatch):
 
 
 def test_determine_decision_numerical_node_higher_value(monkeypatch):
-    node1 = Node(value=2)
-    node2 = Node(value=3)
+    node1 = Node(decision=2)
+    node2 = Node(decision=3)
     subnodes = {
         '<=': node1,
         '>': node2
@@ -292,8 +302,8 @@ def test_determine_decision_numerical_node_higher_value(monkeypatch):
 
 
 def test_determine_decision_not_numerical_node(monkeypatch):
-    node1 = Node(value='a')
-    node2 = Node(value='b')
+    node1 = Node(decision='a')
+    node2 = Node(decision='b')
     subnodes = {
         'A': node1,
         'B': node2
@@ -307,8 +317,8 @@ def test_determine_decision_not_numerical_node(monkeypatch):
 
 
 def test_determine_decision_bool_true(monkeypatch):
-    node1 = Node(value='a')
-    node2 = Node(value='b')
+    node1 = Node(decision='a')
+    node2 = Node(decision='b')
     subnodes = {
         True: node1,
         False: node2
@@ -322,8 +332,8 @@ def test_determine_decision_bool_true(monkeypatch):
 
 
 def test_determine_decision_bool_false(monkeypatch):
-    node1 = Node(value='a')
-    node2 = Node(value='b')
+    node1 = Node(decision='a')
+    node2 = Node(decision='b')
     subnodes = {
         True: node1,
         False: node2

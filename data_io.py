@@ -12,7 +12,7 @@ def read_data(path):
     try:
         data = pd.read_csv(path, on_bad_lines='skip')
     except PermissionError:
-        print(f"You do not have permission to open file under path:\n{path}")
+        print(f"You do not have permission to read file under path:\n{path}")
         print('Please specify path to another file.')
         return None
     except IsADirectoryError:
@@ -47,7 +47,7 @@ def write_data(data, path):
         print("Please give the correct path with the file name and its extension.")
         return False
     except PermissionError:
-        print(f"You do not have permission to open file under path:\n{path}")
+        print(f"You do not have permission to write to file under path:\n{path}")
         print('Please specify path to another file.')
         return False
     except OSError:

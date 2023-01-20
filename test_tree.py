@@ -5,10 +5,10 @@ from tree import Node, DecisionTree
 
 def test_init_node_empty():
     node = Node()
-    assert node._feature is None
-    assert node._subnodes is None
-    assert node._threshold is None
-    assert node._value is None
+    assert node.variable is None
+    assert node.subnodes is None
+    assert node.threshold is None
+    assert node.decision is None
 
 
 def test_init_node_numerical():
@@ -19,11 +19,11 @@ def test_init_node_numerical():
         '>': node2
     }
     node = Node('sample', subnodes, 2.5)
-    assert node._feature == 'sample'
-    assert node._subnodes['<='] == node1
-    assert node._subnodes['>'] == node2
-    assert node._threshold == 2.5
-    assert node._value is None
+    assert node.variable == 'sample'
+    assert node.subnodes['<='] == node1
+    assert node.subnodes['>'] == node2
+    assert node.threshold == 2.5
+    assert node.decision is None
 
 
 def test_init_node_not_numerical():
@@ -34,35 +34,35 @@ def test_init_node_not_numerical():
         'B': node2
     }
     node = Node('letter', subnodes)
-    assert node._feature == 'letter'
-    assert node._subnodes['A'] == node1
-    assert node._subnodes['B'] == node2
-    assert node._threshold is None
-    assert node._value is None
+    assert node.variable == 'letter'
+    assert node.subnodes['A'] == node1
+    assert node.subnodes['B'] == node2
+    assert node.threshold is None
+    assert node.decision is None
 
 
 def test_init_leaf_node():
-    node = Node(value='Dog')
-    assert node._feature is None
-    assert node._subnodes is None
-    assert node._threshold is None
-    assert node._value == 'Dog'
+    node = Node(decision='Dog')
+    assert node.variable is None
+    assert node.subnodes is None
+    assert node.threshold is None
+    assert node.decision == 'Dog'
 
 
 def test_init_tree_empty():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     assert tree.outcome_header == 'Doll'
-    assert tree.features == ['Dog', 'Bike']
+    assert tree.variables == ['Dog', 'Bike']
     assert not tree.data
     assert tree.max_tree_depth == 2
     assert tree.root is None
 
 
 def test_prepare_data():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     data = np.array([
         ['Yes', 3, 'Dog'],
@@ -77,12 +77,13 @@ def test_prepare_data():
         [4, 'Dog', 'Yes']],
         dtype=object
     )
-    assert np.array_equal(tree.prepare_data(df, 'Decision'), expected_result)
+    tree._outcome_header = 'Decision'
+    assert np.array_equal(tree.prepare_data(df), expected_result)
 
 
 def test_tree_gini_index_calculator():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     data = np.array(['Bike', 'Dog', 'Dog', 'Doll', 'Dog'])
     expected = 1 - (1/5)**2 - (3/5)**2 - (1/5)**2
@@ -90,8 +91,8 @@ def test_tree_gini_index_calculator():
 
 
 def test_tree_information_gain():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     data = np.array(['Bike', 'Dog', 'Dog', 'Doll', 'Dog'])
     data1 = np.array(['Dog', 'Dog', 'Dog'])
@@ -107,8 +108,8 @@ def test_tree_information_gain():
 
 
 def test_tree_numerical_split():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     split = {'info_gain': -float('inf')}
     data_to_split = np.array([
@@ -131,7 +132,7 @@ def test_tree_numerical_split():
                                           [expected_smaller[:, -1],
                                            expected_bigger[:, -1]])
     new_split = tree.numerical_split(data_to_split, 1, split)
-    assert new_split['feature'] == 1
+    assert new_split['variable_index'] == 1
     assert np.array_equal(new_split['data_subsets']['<='], expected_smaller)
     assert np.array_equal(new_split['data_subsets']['>'], expected_bigger)
     assert new_split['threshold'] == '3'
@@ -139,8 +140,8 @@ def test_tree_numerical_split():
 
 
 def test_tree_numerical_split_no_split():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     data_to_split = np.array([
         [False, 2, 'Dog'],
@@ -154,9 +155,9 @@ def test_tree_numerical_split_no_split():
     assert new_split == split
 
 
-def test_tree_feature_split():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+def test_tree_variable_split():
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     data_to_split = np.array([
         ['Yes', 2, 'Bike'],
@@ -176,17 +177,17 @@ def test_tree_feature_split():
     ])
     expected_gain = tree.information_gain(data_to_split[:, -1], [expected_1[:, -1], expected_2[:, -1]])
     split = {'info_gain': -float('inf')}
-    new_split = tree.feature_split(data_to_split, 0, split)
-    assert new_split['feature'] == 0
+    new_split = tree.variable_split(data_to_split, 0, split)
+    assert new_split['variable_index'] == 0
     assert np.array_equal(new_split['data_subsets']['Yes'], expected_1)
     assert np.array_equal(new_split['data_subsets']['No'], expected_2)
     assert new_split['threshold'] is None
     assert new_split['info_gain'] == expected_gain
 
 
-def test_tree_feature_split_no_split():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+def test_tree_variable_split_no_split():
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     data_to_split = np.array([
         ['Yes', 2, 'Bike'],
@@ -196,28 +197,28 @@ def test_tree_feature_split_no_split():
         ['No', 3.5, 'Car']
     ])
     split = {'info_gain': 1}
-    new_split = tree.feature_split(data_to_split, 0, split)
+    new_split = tree.variable_split(data_to_split, 0, split)
     assert new_split == split
 
 
 def test_build_split():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     subsets = {
         'A': np.array(['A', 2.5, True]),
         'B': np.array(['B', 3, False])
     }
     split = tree.build_split(0, subsets, None, 1)
-    assert split['feature'] == 0
+    assert split['variable_index'] == 0
     assert split['data_subsets'] == subsets
     assert split['threshold'] is None
     assert split['info_gain'] == 1
 
 
-def test_get_best_split_numerical_over_feature():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+def test_determine_best_split_numerical_over_feature():
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     data_to_split = np.array([
         ['Yes', 3.5, 'Dog'],
@@ -241,17 +242,17 @@ def test_get_best_split_numerical_over_feature():
     expected_gain = tree.information_gain(data_to_split[:, -1],
                                           [expected_smaller[:, -1],
                                            expected_bigger[:, -1]])
-    split = tree.get_best_split(data_to_split)
-    assert split['feature'] == 1
+    split = tree.determine_best_split(data_to_split)
+    assert split['variable_index'] == 1
     assert np.array_equal(split['data_subsets']['<='], expected_smaller)
     assert np.array_equal(split['data_subsets']['>'], expected_bigger)
     assert split['threshold'] == 3
     assert split['info_gain'] == expected_gain
 
 
-def test_get_best_split_feature_over_numerical():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+def test_determine_best_split_feature_over_numerical():
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     data_to_split = np.array([
         ['Yes', 3, 'Dog'],
@@ -275,8 +276,8 @@ def test_get_best_split_feature_over_numerical():
     expected_gain = tree.information_gain(data_to_split[:, -1],
                                           [expected_yes[:, -1],
                                            expected_no[:, -1]])
-    split = tree.get_best_split(data_to_split)
-    assert split['feature'] == 0
+    split = tree.determine_best_split(data_to_split)
+    assert split['variable_index'] == 0
     assert np.array_equal(split['data_subsets']['Yes'], expected_yes)
     assert np.array_equal(split['data_subsets']['No'], expected_no)
     assert split['threshold'] is None
@@ -284,8 +285,8 @@ def test_get_best_split_feature_over_numerical():
 
 
 def test_tree_calculate_leaf_value_simple():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     values = np.array([
         'Bike', 'Bike', 'Bike', 'Bike'],
@@ -296,8 +297,8 @@ def test_tree_calculate_leaf_value_simple():
 
 
 def test_tree_calculate_leaf_value_different_values():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
     values = np.array([
         'Dog', 'Bike', 'Dog', 'Bike', 'Doll'],
@@ -308,11 +309,11 @@ def test_tree_calculate_leaf_value_different_values():
 
 
 def test_tree_build_the_tree_simple():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
-    tree.features = ['Decision', 'Age']
-    tree.max_tree_depth = 2
+    tree._variables = ['Decision', 'Age']
+    tree._max_tree_depth = 2
     data = np.array([
         ['Yes', 3, 'Dog'],
         ['No', 5, 'Dog'],
@@ -320,18 +321,18 @@ def test_tree_build_the_tree_simple():
         dtype=object
     )
     root = tree.build_the_tree(data)
-    assert root.feature is None
+    assert root.variable is None
     assert root.subnodes is None
     assert root.threshold is None
-    assert root.value == 'Dog'
+    assert root.decision == 'Dog'
 
 
 def test_tree_build_the_tree_with_feature_split():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
-    tree.features = ['Decision', 'Age']
-    tree.max_tree_depth = 2
+    tree._variables = ['Decision', 'Age']
+    tree._max_tree_depth = 2
     data = np.array([
         ['Yes', 3, 'Dog'],
         ['No', 5, 'Cat'],
@@ -339,28 +340,28 @@ def test_tree_build_the_tree_with_feature_split():
         dtype=object
     )
     root = tree.build_the_tree(data)
-    assert root.feature == 'Decision'
+    assert root.variable == 'Decision'
     assert root.subnodes is not None
     assert root.threshold is None
-    assert root.value is None
+    assert root.decision is None
     yes_node = root.subnodes['Yes']
-    assert yes_node.feature is None
+    assert yes_node.variable is None
     assert yes_node.subnodes is None
     assert yes_node.threshold is None
-    assert yes_node.value == 'Dog'
+    assert yes_node.decision == 'Dog'
     no_node = root.subnodes['No']
-    assert no_node.feature is None
+    assert no_node.variable is None
     assert no_node.subnodes is None
     assert no_node.threshold is None
-    assert no_node.value == 'Cat'
+    assert no_node.decision == 'Cat'
 
 
 def test_tree_build_the_tree_numerical_split():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
-    tree.features = ['Decision', 'Age']
-    tree.max_tree_depth = 2
+    tree._variables = ['Decision', 'Age']
+    tree._max_tree_depth = 2
     data = np.array([
         ['Yes', 3, 'Dog'],
         ['No', 5, 'Cat'],
@@ -368,28 +369,28 @@ def test_tree_build_the_tree_numerical_split():
         dtype=object
     )
     root = tree.build_the_tree(data)
-    assert root.feature == 'Age'
+    assert root.variable == 'Age'
     assert root.subnodes is not None
     assert root.threshold == 4
-    assert root.value is None
+    assert root.decision is None
     smaller_node = root.subnodes['<=']
-    assert smaller_node.feature is None
+    assert smaller_node.variable is None
     assert smaller_node.subnodes is None
     assert smaller_node.threshold is None
-    assert smaller_node.value == 'Dog'
+    assert smaller_node.decision == 'Dog'
     bigger_node = root.subnodes['>']
-    assert bigger_node.feature is None
+    assert bigger_node.variable is None
     assert bigger_node.subnodes is None
     assert bigger_node.threshold is None
-    assert bigger_node.value == 'Cat'
+    assert bigger_node.decision == 'Cat'
 
 
 def test_tree_build_the_tree_not_enough_depth():
-    sample_features = ['Dog', 'Bike', 'Doll']
-    sample_data = pd.DataFrame(columns=sample_features)
+    sample_variables = ['Dog', 'Bike', 'Doll']
+    sample_data = pd.DataFrame(columns=sample_variables)
     tree = DecisionTree(sample_data, 'Doll')
-    tree.features = ['Decision', 'Age']
-    tree.max_tree_depth = 1
+    tree._variables = ['Decision', 'Age']
+    tree._max_tree_depth = 1
     data = np.array([
         ['Yes', 3, 'Dog'],
         ['No', 5, 'Cat'],
@@ -398,21 +399,21 @@ def test_tree_build_the_tree_not_enough_depth():
         dtype=object
     )
     root = tree.build_the_tree(data)
-    assert root.feature == 'Age'
+    assert root.variable == 'Age'
     assert root.subnodes is not None
     assert root.threshold == 4
-    assert root.value is None
+    assert root.decision is None
     smaller_node = root.subnodes['<=']
-    assert smaller_node.feature is None
+    assert smaller_node.variable is None
     assert smaller_node.subnodes is None
     assert smaller_node.threshold is None
-    assert smaller_node.value == 'Dog'
+    assert smaller_node.decision == 'Dog'
     bigger_node = root.subnodes['>']
     # Turtle and Cat cannot be split because the maximum depth has been passed
-    assert bigger_node.feature is None
+    assert bigger_node.variable is None
     assert bigger_node.subnodes is None
     assert bigger_node.threshold is None
-    assert bigger_node.value == 'Cat'
+    assert bigger_node.decision == 'Cat'
 
 
 def test_tree_coverage():
