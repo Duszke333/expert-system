@@ -27,7 +27,8 @@ class Node:
         self._variable = variable
         self._subnodes = subnodes
         self._threshold = threshold
-        # for leaves only
+
+        # used for leaves only
         self._decision = decision
 
     @property
@@ -75,8 +76,10 @@ class DecisionTree:
         variables.remove(outcome_header)
         self._variables = variables
         self._data = self.prepare_data(data)
-        self._max_tree_depth = len(self.variables)
-        # self._max_tree_depth = float('inf')
+        self._max_tree_depth = float('inf')
+        # Uncommenting the line below will limit the number of questions
+        # at the cost of probability of getting the correct answer
+        # self._max_tree_depth = len(self.variables)
         self._root = self.build_the_tree(self.data) if np.any(self.data) else None
 
     @property
@@ -268,7 +271,6 @@ class DecisionTree:
         leaf_value = self.calculate_leaf_value(dataset[:, -1])
         return Node(decision=leaf_value)
 
-
     def make_prediction(self, x, node=None):
         """
         A method that returns the outcome value matched for the given
@@ -287,9 +289,9 @@ class DecisionTree:
         else:
             return self.make_prediction(x, node.subnodes[feature_value])
 
-    def coverage(self):
+    def accuracy(self):
         """
-        A method that calculates the coverage of the decision tree,
+        A method that calculates the accuracy of the decision tree,
         which is the ratio of correct decisions made to the number of given rules.
         Returns a string informing about the result.
         """
@@ -300,9 +302,9 @@ class DecisionTree:
         for index, y in enumerate(predicted_values):
             if y == outcome_values[index]:
                 correct_predictions += 1
-        coverage_percentage = round(correct_predictions / len(predicted_values) * 100, 2)
+        accuracy_percentage = round(correct_predictions / len(predicted_values) * 100, 2)
         correct_decisions = f'{correct_predictions} / {len(outcome_values)}'
-        return f'The data coverage is {coverage_percentage}% ({correct_decisions})'
+        return f'The answer accuracy is {accuracy_percentage}% ({correct_decisions})'
 
     def printer(self, node=None, indent='  ', answer=''):
         """

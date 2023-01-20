@@ -132,7 +132,7 @@ def input_data_from_keyboard():
     variable_names = []
     print('Please input at least 2 different variable names.')
     variable_name = ''
-    while not (variable_name.lower() == 'quit' and len(variable_names) >=2):
+    while not (variable_name.lower() == 'quit' and len(variable_names) >= 2):
         print('Please input the variable name', end='')
         if len(variable_names) >= 2:
             print(' or type "Quit" to end adding', end='')
@@ -204,7 +204,7 @@ def build_tree(data, outcome_variable):
     print('Creating the tree... ', end='')
     tree = DecisionTree(data, outcome_variable)
     print('Done!')
-    print(tree.coverage())
+    print(tree.accuracy())
     input('Press ENTER to continue.\n')
     system('cls||clear')
     return tree
@@ -289,12 +289,13 @@ def determine_decision(node, question_number=1):
         return determine_decision(node.subnodes[choice], question_number + 1)
 
 
-def make_decision(tree, data, file_path):
+def make_decision(tree, data, file_path, outcome_variable):
     """
     A function that asks the user questions and decides what the correct answer is.
     If the answer is not correct, it calls the learn() function to extend the database.
     """
     # tree.printer()
+    print(f'Looking for decision regarding "{outcome_variable}"')
     print('The decision making process will now start.')
     print('You will be asked a series of questions.')
     print('Provided information will help determine the correct answer.')
@@ -310,7 +311,7 @@ def make_decision(tree, data, file_path):
     if validate_yes_no():
         system('cls||clear')
         print('Making another decision...')
-        make_decision(tree, data, file_path)
+        make_decision(tree, data, file_path, outcome_variable)
     system('cls||clear')
 
 
@@ -323,7 +324,7 @@ def main():
         print("Welcome to the expert system.")
         data, file_path, outcome_variable = import_data_choice()
         tree = build_tree(data, outcome_variable)
-        make_decision(tree, data, file_path)
+        make_decision(tree, data, file_path, outcome_variable)
     except (KeyboardInterrupt, EOFError):
         system('cls||clear')
     print('Thank you for using the program.')

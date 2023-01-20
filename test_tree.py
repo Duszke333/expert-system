@@ -56,7 +56,7 @@ def test_init_tree_empty():
     assert tree.outcome_header == 'Doll'
     assert tree.variables == ['Dog', 'Bike']
     assert not tree.data
-    assert tree.max_tree_depth == 2
+    assert tree.max_tree_depth == float('inf')
     assert tree.root is None
 
 
@@ -426,7 +426,7 @@ def test_tree_coverage():
     )
     df = pd.DataFrame(data, columns=['Decision', 'Age', 'Animal'])
     tree = DecisionTree(df, 'Animal')
-    assert tree.coverage() == 'The data coverage is 100.0% (4 / 4)'
+    assert tree.accuracy() == 'The answer accuracy is 100.0% (4 / 4)'
 
 
 def test_tree_make_prediction():
