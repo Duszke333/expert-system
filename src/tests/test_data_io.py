@@ -1,5 +1,10 @@
 import pandas as pd
 from io import StringIO
+import sys
+import os
+
+# Add the src directory to sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from data_io import read_data, write_data
 
 

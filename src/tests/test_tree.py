@@ -1,5 +1,10 @@
 import numpy as np
 import pandas as pd
+import sys
+import os
+
+# Add the src directory to sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from tree import Node, DecisionTree
 
 
@@ -55,7 +60,7 @@ def test_init_tree_empty():
     tree = DecisionTree(sample_data, 'Doll')
     assert tree.outcome_header == 'Doll'
     assert tree.variables == ['Dog', 'Bike']
-    assert not tree.data
+    assert len(tree.data) == 0
     assert tree.max_tree_depth == float('inf')
     assert tree.root is None
 

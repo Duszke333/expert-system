@@ -1,5 +1,10 @@
 import pandas as pd
 import numpy as np
+import sys
+import os
+
+# Add the src directory to sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from main import validate_choice, validate_yes_no
 from main import add_new_rule_to_data, input_data_from_keyboard, fill_dataset_with_rules
 from main import determine_decision
