@@ -56,7 +56,7 @@ def import_from_file():
     Returns collected data, given path to file and the outcome variable header.
     """
     print('Please input path to the desired csv file (with file extension): ')
-    print('*example: ./datasets/(name_of_chosen_file).csv')
+    print('*example: ../datasets/(name_of_chosen_file).csv')
     data_from_file = None
     while data_from_file is None:
         file_path = input('>>').strip()
